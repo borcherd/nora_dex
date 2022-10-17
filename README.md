@@ -1,4 +1,4 @@
-# DINO DEX UI
+# NORA DEX UI
 
 An implementation of a UI for the Serum DEX.
 
