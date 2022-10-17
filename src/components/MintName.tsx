@@ -5,6 +5,7 @@ import { useMintToTickers } from '../utils/tokens';
 import { Popover } from 'antd';
 import LinkAddress from './LinkAddress';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { PRIMARY_PINK } from 'consts/colors.consts';
 
 export function MintName({
   mint,
@@ -33,7 +34,7 @@ export function MintName({
             title="Token mint"
             trigger="hover"
           >
-            <InfoCircleOutlined style={{ color: '#Ff3399' }} />
+            <InfoCircleOutlined style={{ color: PRIMARY_PINK}} />
           </Popover>
         </>
       ) : null}

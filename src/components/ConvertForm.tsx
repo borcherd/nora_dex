@@ -25,13 +25,14 @@ import { SwapOutlined } from '@ant-design/icons';
 import { CustomMarketInfo } from '../utils/types';
 // import Wallet from '@project-serum/sol-wallet-adapter';
 import { WalletAdapter } from '../wallet-adapters';
+import { PRIMARY_PINK } from 'consts/colors.consts';
 
 const { Option } = Select;
 const { Title } = Typography;
 
 const ActionButton = styled(Button)`
-  color: #Ff3399;
-  background-color: #212734;
+color:${PRIMARY_PINK};
+background-color: #212734;
   border-width: 0px;
 `;
 

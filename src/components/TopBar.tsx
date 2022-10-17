@@ -10,6 +10,7 @@ import { notify } from '../utils/notifications';
 import { Connection } from '@solana/web3.js';
 import WalletConnect from './WalletConnect';
 import { getTradePageUrl } from '../utils/markets';
+import { PRIMARY_PINK } from 'consts/colors.consts';
 
 const Wrapper = styled.div`
   background: transparent; 
@@ -21,7 +22,7 @@ const Wrapper = styled.div`
 const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
-  color: #Ff3399;
+  color:${PRIMARY_PINK};
   font-weight: bold;
   cursor: pointer;
   img {

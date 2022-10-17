@@ -6,6 +6,7 @@ import BalancesTable from './BalancesTable';
 import FeesTable from './FeesTable';
 import FillsTable from './FillsTable';
 import OpenOrderTable from './OpenOrderTable';
+import { PRIMARY_PINK } from 'consts/colors.consts';
 
 export default function Index({ smallScreen, market }) {
   const [activeKeyStr, setActiveKeyStr] = useState('orders');
@@ -21,7 +22,7 @@ export default function Index({ smallScreen, market }) {
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                activeKeyStr === 'orders' ? '2px solid #Ff3399' : '',
+                activeKeyStr === 'orders' ? `2px solid ${PRIMARY_PINK}` : '',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -42,7 +43,8 @@ export default function Index({ smallScreen, market }) {
               width: '50%',
               textAlign: 'center',
               border: 'transparent',
-              borderBottom: activeKeyStr === 'fills' ? '2px solid #Ff3399' : '',
+              borderBottom:
+                activeKeyStr === 'fills' ? `2px solid ${PRIMARY_PINK}` : '',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -64,7 +66,7 @@ export default function Index({ smallScreen, market }) {
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                activeKeyStr === 'balances' ? '2px solid #Ff3399' : '',
+                activeKeyStr === 'balances' ? `2px solid ${PRIMARY_PINK}` : '',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -87,7 +89,7 @@ export default function Index({ smallScreen, market }) {
                 textAlign: 'center',
                 border: 'transparent',
                 borderBottom:
-                  activeKeyStr === 'fees' ? '2px solid #Ff3399' : '',
+                  activeKeyStr === 'fees' ? `2px solid ${PRIMARY_PINK}` : '',
                 background: 'transparent',
                 fontSize: 14,
                 fontStyle: 'normal',
@@ -131,7 +133,7 @@ export default function Index({ smallScreen, market }) {
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                activeKeyStr === 'orders' ? '2px solid #Ff3399' : '',
+                activeKeyStr === 'orders' ? `2px solid ${PRIMARY_PINK}` : '',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -153,7 +155,8 @@ export default function Index({ smallScreen, market }) {
               width: '50%',
               textAlign: 'center',
               border: 'transparent',
-              borderBottom: activeKeyStr === 'fills' ? '2px solid #Ff3399' : '',
+              borderBottom:
+                activeKeyStr === 'fills' ? `2px solid ${PRIMARY_PINK}` : '',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -176,7 +179,7 @@ export default function Index({ smallScreen, market }) {
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                activeKeyStr === 'balances' ? '2px solid #Ff3399' : '',
+                activeKeyStr === 'balances' ? `2px solid ${PRIMARY_PINK}` : '',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -200,7 +203,7 @@ export default function Index({ smallScreen, market }) {
                 textAlign: 'center',
                 border: 'transparent',
                 borderBottom:
-                  activeKeyStr === 'fees' ? '2px solid #Ff3399' : '',
+                  activeKeyStr === 'fees' ? `2px solid ${PRIMARY_PINK}` : '',
                 background: 'transparent',
                 fontSize: 14,
                 fontStyle: 'normal',

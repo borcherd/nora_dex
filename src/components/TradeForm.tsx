@@ -26,6 +26,7 @@ import {
   roundToDecimal,
 } from '../utils/utils';
 import { getUnixTs, placeOrder } from '../utils/send';
+import { PRIMARY_PINK } from 'consts/colors.consts';
 
 const BuyButton = styled(Button)`
   margin: 20px 0px 0px 0px;
@@ -288,7 +289,7 @@ export default function TradeForm({
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                side === 'buy' ? '2px solid #Ff3399' : '2px solid #1C274F',
+                side === 'buy' ? `2px solid ${PRIMARY_PINK}` : '2px solid #1C274F',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -308,7 +309,7 @@ export default function TradeForm({
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                side === 'sell' ? '2px solid #Ff3399' : '2px solid #1C274F',
+                side === 'sell' ? `2px solid ${PRIMARY_PINK}` : '2px solid #1C274F',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -474,7 +475,7 @@ export default function TradeForm({
               marginTop: 20,
               height: 41,
               background: 'rgba(90, 196, 190, 0.1)',
-              border: '1px solid #Ff3399',
+              border: `1px solid ${PRIMARY_PINK}`,
               borderRadius: 4,
             }}
           >
