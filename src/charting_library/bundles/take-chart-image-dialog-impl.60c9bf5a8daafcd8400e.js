@@ -400,7 +400,7 @@
               );
             }),
             (t.prototype.componentWillReceiveProps = function (e) {
-              this.setState({ message: 'error', error: e.error });
+              this.setState({ message: e.message, error: e.error });
             }),
             (t.prototype.componentDidUpdate = function (e) {
               var t = this;

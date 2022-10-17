@@ -11,7 +11,7 @@ export default function Index({ smallScreen, market }) {
   const [activeKeyStr, setActiveKeyStr] = useState('orders');
   if (smallScreen) {
     return (
-      <FloatingElement style={{ flex: 1, paddingTop: 4 }}>
+      <FloatingElement style={{ flex: 1, paddingTop: 40 }}>
         <Row>
           <Col
             span={24 / (market && market.supportsSrmFeeDiscounts ? 4 : 3)}

@@ -10,8 +10,8 @@ export const _MARKETS = [
   {
     name: 'SOL/USDC',
     deprecated: false,
-    address: new PublicKey('7xMDbYTCqQEcK2aM9LbetGtNFJpzKdfXzLL5juaLh4GJ'),
-    programId: new PublicKey('EUqojwWA2rd19FZrzeBncJsm38Jm1hEhE3zsmX3bRc2o'),
+    address: new PublicKey('9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT'),
+    programId: new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'),
   },
   {
     name: 'RAY/USDC',

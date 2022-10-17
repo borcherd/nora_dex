@@ -10,6 +10,7 @@ import NewPoolPage from './pages/pools/NewPoolPage';
 import PoolPage from './pages/pools/PoolPage';
 import PoolListPage from './pages/pools/PoolListPage';
 import { getTradePageUrl } from './utils/markets';
+import DashboardPage from 'pages/DashboardPage';
 
 export function Routes() {
   return (
@@ -23,9 +24,10 @@ export function Routes() {
             <Route exact path="/trade/market/:marketAddress">
               <TradePage />
             </Route>
-            <Route exact path="/orders" component={OpenOrdersPage} />
+                 <Route exact path="/orders" component={OpenOrdersPage} />
             <Route exact path="/balances" component={BalancesPage} />
-            <Route exact path="/convert" component={ConvertPage} />
+            <Route exact path="/swap" component={ConvertPage} />
+            <Route exact path="/dashboard" component={DashboardPage}/>
             <Route
               exact
               path="/list-new-market"
@@ -39,6 +41,9 @@ export function Routes() {
             </Route>
             <Route exact path="/pools/:poolAddress">
               <PoolPage />
+            </Route>
+            <Route exact path="/dashboard">
+              <DashboardPage/>
             </Route>
           </Switch>
         </BasicLayout>

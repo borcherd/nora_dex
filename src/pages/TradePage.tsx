@@ -27,8 +27,7 @@ import { MarketInfo } from '../utils/types';
 const { Option, OptGroup } = Select;
 
 const Wrapper = styled.div`
-background: rgb(28,28,28);
-background: radial-gradient(circle, rgba(28,28,28,1) 0%, rgba(6,6,6,1) 50%, rgba(25,31,88,1) 100%);
+
   height: 100%;
   display: flex;
   flex-direction: column;

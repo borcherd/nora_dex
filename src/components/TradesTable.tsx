@@ -26,9 +26,7 @@ export default function PublicTrades({ smallScreen }) {
             ? { flex: 1 }
             : {
               // marginTop: '10px',
-              minHeight: '400px',
-              maxHeight: 'calc(100vh - 700px)',
-            }),
+              minHeight: '400px'            }),
         }
       }
     >

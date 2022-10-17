@@ -1,7 +1,6 @@
 import { Col, Row, Menu } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import logo from '../assets/logo.png';
 import logo_white_text from '../assets/logo_white_text.png'
 import styled from 'styled-components';
 import { ENDPOINTS, useConnectionConfig } from '../utils/connection';
@@ -38,7 +37,11 @@ const MENU = [
   },
   {
     title: 'Swap',
-    link: '/#/convert',
+    link: '/#/swap',
+  },
+  {
+    title: 'Dashboard',
+    link: '/#/dashboard',
   },
 
 ];

@@ -27,7 +27,7 @@
       ));
   }
   function c(e) {
-    return void 0 === e ? '' : 'string' == typeof e ? e : 'error';
+    return void 0 === e ? '' : 'string' == typeof e ? e : e.message;
   }
   var i =
     ((t.prototype.getBars = function (e, t, r, s) {
@@ -410,7 +410,7 @@
             ' (' +
             r.symbol[s] +
             '): ' +
-            'error',
+            e.message,
         );
       }
     }),
