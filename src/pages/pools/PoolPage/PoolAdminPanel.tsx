@@ -30,7 +30,7 @@ const { Option } = Select;
 
 export function PoolAdminPanel({ poolInfo }: { poolInfo: PoolInfo }) {
   return (
-    <FloatingElement>
+    <FloatingElement stretchVertical={false} style={null}>
       <Tabs>
         <TabPane tab="Pause/Unpause" key="pause">
           <PauseUnpauseTab poolInfo={poolInfo} />

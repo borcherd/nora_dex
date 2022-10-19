@@ -21,7 +21,7 @@ export default function PoolBalancesPanel({
   poolInfo: PoolInfo;
 }) {
   return (
-    <FloatingElement>
+    <FloatingElement stretchVertical={false} style={null}>
       <Tabs>
         <TabPane tab="Wallet Balances" key="wallet">
           <WalletBalancesTab poolInfo={poolInfo} />

@@ -1,9 +1,9 @@
 import { DeleteOutlined } from '@ant-design/icons';
+import styled from '@emotion/styled';
 import { Col, Row, Select } from 'antd';
 import { nanoid } from 'nanoid';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
-import styled from 'styled-components';
+import { useNavigate, useParams } from 'react-router-dom';
 import CustomMarketDialog from '../components/CustomMarketDialog';
 import DeprecatedMarketsInstructions from '../components/DeprecatedMarketsInstructions';
 import Orderbook from '../components/Orderbook';
@@ -38,15 +38,22 @@ const Wrapper = styled.div`
 `;
 
 export default function TradePage() {
-  const { marketAddress } = useParams();
+  const { marketAddress } = useParams<{ marketAddress: string }>();
+  const navigate = useNavigate()
   useEffect(() => {
+    if (marketAddress === undefined){
+      const navString = getTradePageUrl()
+      navigate(navString)
+    }
     if (marketAddress) {
       localStorage.setItem('marketAddress', JSON.stringify(marketAddress));
     }
   }, [marketAddress]);
-  const history = useHistory();
+
+
+  const history = useNavigate();
   function setMarketAddress(address) {
-    history.push(getTradePageUrl(address));
+    history(getTradePageUrl(address));
   }
 
   return (

@@ -1,6 +1,6 @@
+import styled from '@emotion/styled';
 import { Button, Col, Row } from 'antd';
 import React, { useState } from 'react';
-import styled from 'styled-components';
 import { useSendConnection } from '../utils/connection';
 import {
   useBalances,
@@ -126,7 +126,7 @@ export default function StandaloneBalancesDisplay() {
     ],
   ];
   return (
-    <FloatingElement style={{ flex: 1, paddingTop: 9 }}>
+    <FloatingElement style={{ flex: 1, paddingTop: 9 }} stretchVertical={false}>
       <div
         style={{
           width: '100%',

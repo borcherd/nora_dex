@@ -1,5 +1,4 @@
 import React, { Children, useMemo } from 'react';
-import styled from 'styled-components';
 import ConvertForm from '../components/ConvertForm';
 import { Row, Col } from 'antd';
 import { DEFAULT_MARKET, MarketProvider } from '../utils/markets';
@@ -7,6 +6,7 @@ import { useLocalStorageState } from '../utils/utils';
 import { ConnectionProvider, useConnection } from 'utils/connection';
 import { Connection } from '@solana/web3.js';
 import { useWallet, WalletProvider } from 'utils/wallet';
+import styled from '@emotion/styled';
 
 
 

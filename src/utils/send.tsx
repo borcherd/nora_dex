@@ -30,7 +30,7 @@ import { SelectedTokenAccounts, TokenAccount } from './types';
 import { Order } from '@project-serum/serum/lib/market';
 import { Buffer } from 'buffer';
 import assert from 'assert';
-import { struct } from 'superstruct';
+import * as superstruct from 'superstruct';
 import { WalletAdapter } from '../wallet-adapters';
 import { getTokenByMintAddress } from './tokens';
 
@@ -46,6 +46,27 @@ export async function createTokenAccountTransaction({
   transaction: Transaction;
   newAccountPubkey: PublicKey;
 }> {
+  // const ata = await getAssociatedTokenAddress(
+  //   ASSOCIATED_TOKEN_PROGRAM_ID,
+  //   TOKEN_PROGRAM_ID,
+  //   mintPublicKey,
+  //   wallet.publicKey,
+  // );
+  // const transaction = new Transaction();
+  // transaction.add(
+  //   createAssociatedTokenAccountInstruction(
+  //     ASSOCIATED_TOKEN_PROGRAM_ID,
+  //     TOKEN_PROGRAM_ID,
+  //     mintPublicKey,
+  //     ata,
+  //     wallet.publicKey,
+  //     wallet.publicKey,
+  //   ),
+  // );
+  // return {
+  //   transaction,
+  //   newAccountPubkey: ata,
+  // };
   const ata = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
@@ -134,16 +155,14 @@ export async function settleFunds({
       referrerQuoteWallet = new PublicKey(quoteToken?.referrer);
     }
   }
-  const {
-    transaction: settleFundsTransaction,
-    signers: settleFundsSigners,
-  } = await market.makeSettleFundsTransaction(
-    connection,
-    openOrders,
-    baseCurrencyAccountPubkey,
-    quoteCurrencyAccountPubkey,
-    referrerQuoteWallet,
-  );
+  const { transaction: settleFundsTransaction, signers: settleFundsSigners } =
+    await market.makeSettleFundsTransaction(
+      connection,
+      openOrders,
+      baseCurrencyAccountPubkey,
+      quoteCurrencyAccountPubkey,
+      referrerQuoteWallet,
+    );
 
   let transaction = mergeTransactions([
     createAccountTransaction,
@@ -232,15 +251,15 @@ export async function settleAllFunds({
           tokenAccounts,
           baseMint,
           baseMint &&
-          selectedTokenAccounts &&
-          selectedTokenAccounts[baseMint.toBase58()],
+            selectedTokenAccounts &&
+            selectedTokenAccounts[baseMint.toBase58()],
         )?.pubkey;
         const selectedQuoteTokenAccount = getSelectedTokenAccountForMint(
           tokenAccounts,
           quoteMint,
           quoteMint &&
-          selectedTokenAccounts &&
-          selectedTokenAccounts[quoteMint.toBase58()],
+            selectedTokenAccounts &&
+            selectedTokenAccounts[quoteMint.toBase58()],
         )?.pubkey;
         if (!selectedBaseTokenAccount || !selectedQuoteTokenAccount) {
           return null;
@@ -397,26 +416,22 @@ export async function placeOrder({
   const signers: Account[] = [];
 
   if (!baseCurrencyAccount) {
-    const {
-      transaction: createAccountTransaction,
-      newAccountPubkey,
-    } = await createTokenAccountTransaction({
-      connection,
-      wallet,
-      mintPublicKey: market.baseMintAddress,
-    });
+    const { transaction: createAccountTransaction, newAccountPubkey } =
+      await createTokenAccountTransaction({
+        connection,
+        wallet,
+        mintPublicKey: market.baseMintAddress,
+      });
     transaction.add(createAccountTransaction);
     baseCurrencyAccount = newAccountPubkey;
   }
   if (!quoteCurrencyAccount) {
-    const {
-      transaction: createAccountTransaction,
-      newAccountPubkey,
-    } = await createTokenAccountTransaction({
-      connection,
-      wallet,
-      mintPublicKey: market.quoteMintAddress,
-    });
+    const { transaction: createAccountTransaction, newAccountPubkey } =
+      await createTokenAccountTransaction({
+        connection,
+        wallet,
+        mintPublicKey: market.quoteMintAddress,
+      });
     transaction.add(createAccountTransaction);
     quoteCurrencyAccount = newAccountPubkey;
   }
@@ -443,15 +458,13 @@ export async function placeOrder({
   const matchOrderstransaction = market.makeMatchOrdersTransaction(5);
   transaction.add(matchOrderstransaction);
   const startTime = getUnixTs();
-  let {
-    transaction: placeOrderTx,
-    signers: placeOrderSigners,
-  } = await market.makePlaceOrderTransaction(
-    connection,
-    params,
-    120_000,
-    120_000,
-  );
+  let { transaction: placeOrderTx, signers: placeOrderSigners } =
+    await market.makePlaceOrderTransaction(
+      connection,
+      params,
+      120_000,
+      120_000,
+    );
   const endTime = getUnixTs();
   console.log(`Creating order transaction took ${endTime - startTime}`);
   transaction.add(placeOrderTx);
@@ -757,15 +770,16 @@ export async function sendSignedTransaction({
   try {
     await awaitTransactionSignatureConfirmation(txid, timeout, connection);
   } catch (err) {
-    if (err.timeout) {
-      throw new Error('Timed out awaiting confirmation on transaction');
+    if (err instanceof Error) {
+        throw new Error('Timed out awaiting confirmation on transaction');
     }
+
     let simulateResult: SimulatedTransactionResponse | null = null;
     try {
       simulateResult = (
         await simulateTransaction(connection, signedTransaction, 'single')
       ).value;
-    } catch (e) { }
+    } catch (e) {}
     if (simulateResult && simulateResult.err) {
       if (simulateResult.logs) {
         for (let i = simulateResult.logs.length - 1; i >= 0; --i) {
@@ -887,14 +901,14 @@ function mergeTransactions(transactions: (Transaction | undefined)[]) {
 }
 
 function jsonRpcResult(resultDescription: any) {
-  const jsonRpcVersion = struct.literal('2.0');
-  return struct.union([
-    struct({
+  const jsonRpcVersion = superstruct.literal('2.0');
+  return superstruct.union([
+    superstruct.object<{jsonrpc, id, error}>({
       jsonrpc: jsonRpcVersion,
       id: 'string',
-      error: 'any',
+      error: 'any'
     }),
-    struct({
+    superstruct.object<{jsonrpc, id, error, result}>({
       jsonrpc: jsonRpcVersion,
       id: 'string',
       error: 'null?',
@@ -905,14 +919,14 @@ function jsonRpcResult(resultDescription: any) {
 
 function jsonRpcResultAndContext(resultDescription: any) {
   return jsonRpcResult({
-    context: struct({
+    context: superstruct.object<{slot}>({
       slot: 'number',
     }),
     value: resultDescription,
   });
 }
 
-const AccountInfoResult = struct({
+const AccountInfoResult = superstruct.object<{executable, owner, lamports, data, rentEpoch}>({
   executable: 'boolean',
   owner: 'string',
   lamports: 'number',
@@ -920,9 +934,11 @@ const AccountInfoResult = struct({
   rentEpoch: 'number?',
 });
 
-export const GetMultipleAccountsAndContextRpcResult = jsonRpcResultAndContext(
-  struct.array([struct.union(['null', AccountInfoResult])]),
-);
+//TODO: fix superstruct
+
+// export const GetMultipleAccountsAndContextRpcResult = jsonRpcResultAndContext(
+//   //superstruct.array(superstruct.union([AccountInfoResult, 'null'])),
+// );
 
 export async function getMultipleSolanaAccounts(
   connection: Connection,
@@ -932,14 +948,14 @@ export async function getMultipleSolanaAccounts(
 > {
   const args = [publicKeys.map((k) => k.toBase58()), { commitment: 'recent' }];
   // @ts-ignore
-  const unsafeRes = await connection._rpcRequest('getMultipleAccounts', args);
-  const res = GetMultipleAccountsAndContextRpcResult(unsafeRes);
+  const res = await connection._rpcRequest('getMultipleAccounts', args);
+  //const res = GetMultipleAccountsAndContextRpcResult(unsafeRes);
   if (res.error) {
     throw new Error(
       'failed to get info about accounts ' +
-      publicKeys.map((k) => k.toBase58()).join(', ') +
-      ': ' +
-      res.error.message,
+        publicKeys.map((k) => k.toBase58()).join(', ') +
+        ': ' +
+        res.error.message,
     );
   }
   assert(typeof res.result !== 'undefined');

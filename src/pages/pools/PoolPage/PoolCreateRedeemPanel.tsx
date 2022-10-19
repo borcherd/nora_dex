@@ -27,7 +27,7 @@ export default function PoolCreateRedeemPanel({
   mintInfo,
 }: PoolCreateRedeemPanel) {
   return (
-    <FloatingElement stretchVertical>
+    <FloatingElement stretchVertical={true} style={null}>
       <Tabs>
         <TabPane tab="Create" key="create">
           <CreateRedeemTab

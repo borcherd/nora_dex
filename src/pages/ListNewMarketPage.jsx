@@ -4,10 +4,10 @@ import { notify } from '../utils/notifications';
 import { MARKETS } from '@project-serum/serum';
 import { useConnection } from '../utils/connection';
 import FloatingElement from '../components/layout/FloatingElement';
-import styled from 'styled-components';
 import { useWallet } from '../utils/wallet';
 import { listMarket } from '../utils/send';
 import { useMintInput } from '../components/useMintInput';
+import styled from '@emotion/styled';
 
 const { Text, Title } = Typography;
 

@@ -1,13 +1,9 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 const Wrapper = styled.div``;
 
-export default function FloatingElement({
-  style = undefined,
-  children,
-  stretchVertical = false,
-}) {
+export default function FloatingElement({ style, children, stretchVertical }) {
   return (
     <Wrapper
       style={{

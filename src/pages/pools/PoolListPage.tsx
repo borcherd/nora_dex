@@ -1,8 +1,8 @@
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import FloatingElement from '../../components/layout/FloatingElement';
 import React, { useState } from 'react';
 import { Button, Input, Typography } from 'antd';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Link from '../../components/Link';
 
 const { Title } = Typography;
@@ -23,15 +23,15 @@ const Form = styled.form`
 
 export default function PoolListPage() {
   const [poolAddress, setPoolAddress] = useState('');
-  const history = useHistory();
+  const history = useNavigate();
 
   function onSubmit(e) {
     e.preventDefault();
-    history.push(`/pools/${poolAddress}`);
+    history(`/pools/${poolAddress}`);
   }
   return (
     <Wrapper>
-      <FloatingElement>
+      <FloatingElement style={null} stretchVertical={false}>
         <Title level={3}>Pools</Title>
         <Form onSubmit={onSubmit}>
           <Input

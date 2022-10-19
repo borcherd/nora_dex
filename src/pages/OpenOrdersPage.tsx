@@ -52,7 +52,7 @@ export default function OpenOrdersPage() {
   }
 
   return (
-    <FloatingElement style={{ flex: 1, paddingTop: 10 }}>
+    <FloatingElement style={{ flex: 1, paddingTop: 10 }} stretchVertical={false}>
       <Button onClick={refreshOpenOrders} loading={!loaded}>
         Refresh
       </Button>

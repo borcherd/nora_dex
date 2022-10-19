@@ -95,7 +95,7 @@ export default function ConvertForm() {
   };
 
   return (
-    <FloatingElement style={{ maxWidth: 500 }}>
+    <FloatingElement style={{ maxWidth: 500 }} stretchVertical={false}>
       <Title level={3}>Convert</Title>
       {!connected && (
         <Row justify="center">
@@ -228,7 +228,7 @@ function ConvertFormSubmit({
       console.warn(e);
       notify({
         message: 'Error placing order',
-        description: e.message,
+        description: 'e.message',
         type: 'error',
       });
       return;
@@ -291,7 +291,7 @@ function ConvertFormSubmit({
       console.warn(e);
       notify({
         message: 'Error placing order',
-        description: e.message,
+        description: 'e.message',
         type: 'error',
       });
     } finally {

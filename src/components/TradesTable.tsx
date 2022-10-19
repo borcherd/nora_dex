@@ -1,10 +1,10 @@
 import { Col, Row } from 'antd';
 import React from 'react';
-import styled from 'styled-components';
 import { useMarket, useRaydiumTrades } from '../utils/markets';
 import { getDecimalCount } from '../utils/utils';
 import FloatingElement from './layout/FloatingElement';
 import { TradeLayout } from '../utils/types';
+import styled from '@emotion/styled';
 
 const Title = styled.div`
   color: rgba(255, 255, 255, 1);
@@ -19,14 +19,15 @@ export default function PublicTrades({ smallScreen }) {
   const [trades, loaded] = useRaydiumTrades();
 
   return (
-    <FloatingElement
+    <FloatingElement stretchVertical={false}
       style={
         {
           ...(smallScreen
             ? { flex: 1 }
             : {
               // marginTop: '10px',
-              minHeight: '400px'            }),
+              minHeight: '400px'
+            }),
         }
       }
     >

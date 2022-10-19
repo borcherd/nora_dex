@@ -16,7 +16,6 @@ import FloatingElement from './layout/FloatingElement';
 import { SwitchChangeEventHandler } from 'antd/es/switch';
 import { notify } from '../utils/notifications';
 import { refreshCache } from '../utils/fetch-loop';
-import styled from 'styled-components';
 import tuple from 'immutable-tuple';
 import { useSendConnection } from '../utils/connection';
 import { useWallet } from '../utils/wallet';
@@ -27,6 +26,7 @@ import {
 } from '../utils/utils';
 import { getUnixTs, placeOrder } from '../utils/send';
 import { PRIMARY_PINK } from 'consts/colors.consts';
+import styled from '@emotion/styled';
 
 const BuyButton = styled(Button)`
   margin: 20px 0px 0px 0px;
@@ -276,7 +276,7 @@ export default function TradeForm({
   // @ts-ignore
   return (
     <FloatingElement
-      style={{ display: 'flex', flexDirection: 'column', ...style }}
+      style={{ display: 'flex', flexDirection: 'column', ...style }} stretchVertical={false}
     >
       <div style={{ flex: 1 }}>
         <Row>

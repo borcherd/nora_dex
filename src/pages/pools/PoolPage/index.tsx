@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Col, PageHeader, Row, Spin, Typography } from 'antd';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, PublicKeyInitData } from '@solana/web3.js';
 import { useAccountInfo } from '../../../utils/connection';
 import FloatingElement from '../../../components/layout/FloatingElement';
 import {
@@ -13,18 +13,18 @@ import PoolInfoPanel from './PoolInfoPanel';
 import { parseTokenMintData } from '../../../utils/tokens';
 import PoolCreateRedeemPanel from './PoolCreateRedeemPanel';
 import PoolBalancesPanel from './PoolBalancesPanel';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PoolAdminPanel } from './PoolAdminPanel';
 import { useWallet } from '../../../utils/wallet';
 
 const { Text } = Typography;
 
 export default function PoolPage() {
-  const { poolAddress } = useParams();
+  const { poolAddress } = useParams<{ poolAddress: any }>();
   const [poolAccountInfo, poolAccountLoaded] = useAccountInfo(
     isPublicKey(poolAddress) ? new PublicKey(poolAddress) : null,
   );
-  const history = useHistory();
+  const history = useNavigate();
 
   const poolInfo: PoolInfo | null = useMemo(() => {
     if (!poolAccountInfo) {
@@ -54,7 +54,7 @@ export default function PoolPage() {
       <>
         <PageHeader
           title={<>Pool {poolInfo.address.toBase58()}</>}
-          onBack={() => history.push('/pools')}
+          onBack={() => history('/pools')}
           subTitle={poolInfo.state.name}
         />
         <Row>
@@ -83,9 +83,9 @@ export default function PoolPage() {
     <>
       <PageHeader
         title={<>Pool {poolAddress}</>}
-        onBack={() => history.push('/pools')}
+        onBack={() => history('/pools')}
       />
-      <FloatingElement>
+      <FloatingElement style={null} stretchVertical={false}> 
         {!poolAccountLoaded || !mintAccountInfoLoaded ? (
           <Spin />
         ) : (

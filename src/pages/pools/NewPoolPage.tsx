@@ -11,7 +11,7 @@ import {
 import { PublicKey } from '@solana/web3.js';
 import { useConnection } from '../../utils/connection';
 import FloatingElement from '../../components/layout/FloatingElement';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { useWallet } from '../../utils/wallet';
 import { sendSignedTransaction, signTransactions } from '../../utils/send';
 import { useMintInput } from '../../components/useMintInput';
@@ -154,7 +154,7 @@ export default function NewPoolPage() {
 
   return (
     <Wrapper>
-      <FloatingElement>
+      <FloatingElement style={null} stretchVertical={false}>
         <Title level={4}>Create new pool</Title>
         <Form layout="vertical" onFinish={onSubmit}>
           <Form.Item
@@ -265,7 +265,7 @@ export default function NewPoolPage() {
         </Form>
       </FloatingElement>
       {newPoolAddress ? (
-        <FloatingElement>
+        <FloatingElement style={null} stretchVertical={false}>
           <Text>
             New pool address:{' '}
             <Link to={`/pools/${newPoolAddress.toBase58()}`}>

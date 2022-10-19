@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
-import styled from 'styled-components';
 import { Button, Col, Row } from 'antd';
 import { cancelOrder } from '../../utils/send';
 import { useWallet } from '../../utils/wallet';
 import { useSendConnection } from '../../utils/connection';
 import { notify } from '../../utils/notifications';
 import { OrderWithMarketAndMarketName } from '../../utils/types';
+import styled from '@emotion/styled';
 
 const CancelButton = styled(Button)`
   color: rgba(241, 241, 242, 1);

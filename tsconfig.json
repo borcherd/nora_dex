@@ -1,5 +1,4 @@
 {
-  "extends": "@tsconfig/node12/tsconfig.json",
   "compilerOptions": {
     "target": "esnext",
     "outDir": "./lib",
@@ -9,6 +8,8 @@
     "declarationMap": true,
     "noImplicitAny": false,
     "sourceMap": true,
+    "strict": true,
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -17,10 +18,16 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react",
-    "lib": ["dom", "esnext"],
-    "baseUrl": "src"
+    "lib": [
+      "dom",
+      "esnext"
+    ],
+    "baseUrl": "src",
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["./src/", "src/pages/.DashboardPage.tsx"],
+  "include": [
+    "./src/"
+  ],
   "exclude": [
     "./src/**/*.test.js",
     "node_modules",

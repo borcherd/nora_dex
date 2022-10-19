@@ -1,8 +1,7 @@
 import { Col, Row, Menu } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo_white_text from '../assets/logo_white_text.png'
-import styled from 'styled-components';
 import { ENDPOINTS, useConnectionConfig } from '../utils/connection';
 import CustomClusterEndpointDialog from './CustomClusterEndpointDialog';
 import { EndpointInfo } from '../utils/types';
@@ -11,6 +10,7 @@ import { Connection } from '@solana/web3.js';
 import WalletConnect from './WalletConnect';
 import { getTradePageUrl } from '../utils/markets';
 import { PRIMARY_PINK } from 'consts/colors.consts';
+import styled from '@emotion/styled';
 
 const Wrapper = styled.div`
   background: transparent; 
@@ -53,7 +53,7 @@ export default function TopBar() {
   const [addEndpointVisible, setAddEndpointVisible] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const location = useLocation();
-  const history = useHistory();
+  const history = useNavigate();
 
   const onAddCustomEndpoint = (info: EndpointInfo) => {
     const existingEndpoint = availableEndpoints.some(
@@ -155,7 +155,7 @@ export default function TopBar() {
         <Row wrap={false} style={{ paddingTop: 25, height: 70 }}>
           <Col flex="none">
             <LogoWrapper
-              onClick={() => history.push(tradePageUrl)}
+              onClick={() => history(tradePageUrl)}
             >
               <img src={logo_white_text} alt="" style={{ paddingLeft:'5px' }} />
             </LogoWrapper>

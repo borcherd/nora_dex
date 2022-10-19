@@ -30,7 +30,7 @@ export default function PoolInfoPanel({ poolInfo, mintInfo }: PoolInfoProps) {
   );
 
   return (
-    <FloatingElement stretchVertical>
+    <FloatingElement stretchVertical={true} style={null}>
       <Paragraph>Name: {poolInfo.state.name}</Paragraph>
       <Paragraph>
         Address: <Text copyable>{poolInfo.address.toBase58()}</Text>

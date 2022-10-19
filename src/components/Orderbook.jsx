@@ -1,12 +1,13 @@
 import { Col, Row } from 'antd';
 import React, { useRef, useEffect, useState } from 'react';
-import styled, { css } from 'styled-components';
 import { useMarket, useOrderbook, useMarkPrice } from '../utils/markets';
 import { isEqual, getDecimalCount } from '../utils/utils';
 import { useInterval } from '../utils/useInterval';
 import FloatingElement from './layout/FloatingElement';
 import usePrevious from '../utils/usePrevious';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import styled from '@emotion/styled';
+import { css } from '@emotion/react';
 
 const Title = styled.div``;
 

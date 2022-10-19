@@ -15,7 +15,7 @@ export function removeChart(chartId) {
   charts = charts.filter((chart) => chart.id !== chartId);
   localStorage.setItem(CHARTS_KEY, JSON.stringify(charts));
   localStorage.removeItem(CHARTS_KEY + '.' + chartId);
-  return new Promise((resolve) => resolve());
+  return new Promise<void>((resolve) => resolve());
 }
 
 export function saveChart(chartData) {
@@ -73,7 +73,7 @@ export function removeStudyTemplate({ name }) {
   studies = studies.filter((study) => study.name !== name);
   localStorage.setItem(STUDIES_KEY, JSON.stringify(studies));
   localStorage.removeItem(STUDIES_KEY + '.' + name);
-  return new Promise((resolve) => resolve());
+  return new Promise<void>((resolve) => resolve());
 }
 
 export function saveStudyTemplate({ content, ...info }) {
@@ -83,7 +83,7 @@ export function saveStudyTemplate({ content, ...info }) {
   studies.push(info);
   localStorage.setItem(STUDIES_KEY, JSON.stringify(studies));
   localStorage.setItem(STUDIES_KEY + '.' + info.name, content);
-  return new Promise((resolve) => resolve());
+  return new Promise<void>((resolve) => resolve());
 }
 
 export function getStudyTemplateContent({ name }) {
