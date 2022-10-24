@@ -14,6 +14,7 @@ import tuple from 'immutable-tuple';
 import { useAsyncData } from './fetch-loop';
 import { useConnection } from './connection';
 import { useMemo } from 'react';
+import { IGetWalletTokenAccountsBody, ISplAccounts } from 'models/jupiter';
 
 export const ACCOUNT_LAYOUT = BufferLayout.struct([
   BufferLayout.blob(32, 'mint'),
@@ -120,6 +121,21 @@ export async function getTokenAccountInfo(
     effectiveMint: WRAPPED_SOL_MINT,
   });
 }
+
+
+
+export const getWalletTokenAccounts = async (
+  body: IGetWalletTokenAccountsBody
+): Promise<ISplAccounts[]> =>
+  (
+    await body.connection.getParsedTokenAccountsByOwner(
+      body.walletKey,
+      {
+        programId: TOKEN_PROGRAM_ID,
+      },
+      "single"
+    )
+  ).value;
 
 export function useMintToTickers(): { [mint: string]: string } {
   const { customMarkets } = useCustomMarkets();

@@ -1,7 +1,25 @@
 import EventEmitter from 'eventemitter3';
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { PublicKey, Transaction, Connection, Signer, Commitment } from '@solana/web3.js';
 import { notify } from '../../utils/notifications';
 import { DEFAULT_PUBLIC_KEY, WalletAdapter } from '../types';
+
+
+export type SendOptions = {
+  /** disable transaction verification step */
+  skipPreflight?: boolean;
+  /** preflight commitment level */
+  preflightCommitment?: Commitment;
+  /** Maximum number of times for the RPC node to retry sending the transaction to the leader. */
+  maxRetries?: number;
+  /** The minimum slot that the request can be evaluated at */
+  minContextSlot?: number;
+};
+
+export interface SendTransactionOptions extends SendOptions {
+  signers?: Signer[];
+};
+
+
 
 type PhantomEvent = 'disconnect' | 'connect';
 type PhantomRequestMethod =
@@ -75,6 +93,63 @@ export class PhantomWalletAdapter
 
     return this._provider.signTransaction(transaction);
   }
+
+   prepareTransaction = async(
+    transaction: Transaction,
+    connection: Connection,
+    options: SendOptions = {}
+  ): Promise<Transaction> => {
+    const publicKey = this.publicKey;
+    if (!publicKey) throw new Error;
+  
+    transaction.feePayer = transaction.feePayer || publicKey;
+    transaction.recentBlockhash =
+        transaction.recentBlockhash ||
+        (
+            await connection.getLatestBlockhash({
+                commitment: options.preflightCommitment,
+                minContextSlot: options.minContextSlot,
+            })
+        ).blockhash;
+  
+    return transaction;
+  }
+
+
+  async signAndSendTransaction(transaction: Transaction, options?: SendOptions): Promise<{ signature: string }> {
+
+    const resp = (await this._provider?.request(""))
+
+    const response = (await this._provider?.request({
+      method: "send_transaction",
+      params: { message: transaction.serialize({ requireAllSignatures: false }).toString("hex"), options },
+    })) as string;
+    return { signature: response };
+  }
+
+  async sendTransaction(transaction: Transaction, connection: Connection, options?: SendTransactionOptions | undefined)
+  {
+    try {
+        const wallet = this._provider;
+        if (!wallet)
+            throw new Error;
+        try {
+            const { signers, ...sendOptions } = options;
+            transaction = await this.prepareTransaction(transaction, connection, sendOptions);
+            signers?.length && transaction.partialSign(...signers);
+            sendOptions.preflightCommitment = sendOptions.preflightCommitment || connection.commitment;
+            const { signature } = await wallet.signAndSendTransaction(transaction, sendOptions);
+            return signature;
+        }
+        catch (error) {
+            throw new Error;
+        }
+    }
+    catch (error) {
+        this.emit('error', error);
+        throw error;
+    }
+}
 
   connect() {
     if (!this._provider) {

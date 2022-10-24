@@ -16,9 +16,11 @@ export default function App() {
       <ConnectionProvider>
         <ReferrerProvider>
           <WalletProvider>
+            <JupiterAppProvider>
               <Suspense fallback={() => <Spin size="large" />}>
                 <RoutesComp />
               </Suspense>
+            </JupiterAppProvider>
           </WalletProvider>
         </ReferrerProvider>
       </ConnectionProvider>

@@ -1,4 +1,4 @@
-import { PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 
 export const DEFAULT_PUBLIC_KEY = new PublicKey(
   '11111111111111111111111111111111',
@@ -10,6 +10,7 @@ export interface WalletAdapter {
   connected: boolean;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
   signAllTransactions: (transaction: Transaction[]) => Promise<Transaction[]>;
+  sendTransaction: (transaction: Transaction, connection: Connection, options: {}) => Promise<string>;
   connect: () => any;
   disconnect: () => any;
   on<T>(event: string, fn: () => void): this;

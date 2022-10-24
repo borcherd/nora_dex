@@ -7,6 +7,7 @@ import { ConnectionProvider, useConnection } from 'utils/connection';
 import { Connection } from '@solana/web3.js';
 import { useWallet, WalletProvider } from 'utils/wallet';
 import styled from '@emotion/styled';
+import { JupiterApp } from 'components/jupiter/JupiterApp';
 
 
 
@@ -23,8 +24,8 @@ const Wrapper = styled.div`
 export default function SwapPage() { 
 
   return (
-    <Wrapper style={{ flex: 1, paddingTop: 10 }}>
-    
+    <Wrapper style={{ flex: 1, paddingTop: 10, alignItems:'center' }}>
+    <JupiterApp/>
     </Wrapper>
   );
 }
