@@ -12,9 +12,9 @@ import { cloneDeep } from 'lodash-es';
 import { getMultipleSolanaAccounts } from './send';
 import tuple from 'immutable-tuple';
 import { useAsyncData } from './fetch-loop';
-import { useConnection } from './connection';
 import { useMemo } from 'react';
 import { IGetWalletTokenAccountsBody, ISplAccounts } from 'models/jupiter';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 export const ACCOUNT_LAYOUT = BufferLayout.struct([
   BufferLayout.blob(32, 'mint'),
@@ -122,10 +122,8 @@ export async function getTokenAccountInfo(
   });
 }
 
-
-
 export const getWalletTokenAccounts = async (
-  body: IGetWalletTokenAccountsBody
+  body: IGetWalletTokenAccountsBody,
 ): Promise<ISplAccounts[]> =>
   (
     await body.connection.getParsedTokenAccountsByOwner(
@@ -133,7 +131,7 @@ export const getWalletTokenAccounts = async (
       {
         programId: TOKEN_PROGRAM_ID,
       },
-      "single"
+      'single',
     )
   ).value;
 
@@ -182,7 +180,7 @@ export function useMintInfos(): [
   ),
   boolean,
 ] {
-  const connection = useConnection();
+  const { connection } = useConnection();
   const [tokenAccounts] = useTokenAccounts();
   const [allMarkets] = useAllMarkets();
 
@@ -272,5 +270,5 @@ export const TOKENS: Tokens = {
     symbol: 'USDC',
     mintAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     referrer: '92vdtNjEg6Zth3UU1MgPgTVFjSEzTHx66aCdqWdcRkrg',
-  }
+  },
 };

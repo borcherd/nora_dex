@@ -1,19 +1,18 @@
 import styled from '@emotion/styled';
 import { Button, Col, Row } from 'antd';
 import React, { useState } from 'react';
-import { useSendConnection } from '../utils/connection';
 import {
   useBalances,
   useMarket,
   useSelectedBaseCurrencyAccount,
   useSelectedOpenOrdersAccount,
   useSelectedQuoteCurrencyAccount,
-  useTokenAccounts
+  useTokenAccounts,
 } from '../utils/markets';
 import { notify } from '../utils/notifications';
 import { settleFunds } from '../utils/send';
 import { Balances } from '../utils/types';
-import { useWallet } from '../utils/wallet';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import DepositDialog from './DepositDialog';
 import FloatingElement from './layout/FloatingElement';
 import StandaloneTokenAccountsSelect from './StandaloneTokenAccountSelect';
@@ -34,8 +33,8 @@ export default function StandaloneBalancesDisplay() {
   const { baseCurrency, quoteCurrency, market } = useMarket();
   const balances = useBalances();
   const openOrdersAccount = useSelectedOpenOrdersAccount(true);
-  const connection = useSendConnection();
-  const { wallet, connected } = useWallet();
+  const {connection} = useConnection();
+  const { wallet, connected, publicKey, signTransaction } = useWallet();
   const [baseOrQuote, setBaseOrQuote] = useState('');
   const baseCurrencyAccount = useSelectedBaseCurrencyAccount();
   const quoteCurrencyAccount = useSelectedQuoteCurrencyAccount();
@@ -44,7 +43,7 @@ export default function StandaloneBalancesDisplay() {
     balances && balances.find((b) => b.coin === baseCurrency);
   const quoteCurrencyBalances =
     balances && balances.find((b) => b.coin === quoteCurrency);
-  
+
   async function onSettleFunds() {
     if (!wallet) {
       notify({
@@ -88,21 +87,25 @@ export default function StandaloneBalancesDisplay() {
       return;
     }
 
-    try {
-      await settleFunds({
-        market,
-        openOrders: openOrdersAccount,
-        connection,
-        wallet,
-        baseCurrencyAccount,
-        quoteCurrencyAccount,
-      });
-    } catch (e) {
-      notify({
-        message: 'Error settling funds',
-        description: 'error',
-        type: 'error',
-      });
+    if (publicKey) {
+      try {
+        await settleFunds({
+          market,
+          openOrders: openOrdersAccount,
+          connection,
+          wallet,
+          publicKey,
+          baseCurrencyAccount,
+          quoteCurrencyAccount,
+          signTransaction
+        });
+      } catch (e) {
+        notify({
+          message: 'Error settling funds',
+          description: 'error',
+          type: 'error',
+        });
+      }
     }
   }
 
@@ -198,9 +201,7 @@ export default function StandaloneBalancesDisplay() {
                         (account) => account.effectiveMint.toBase58() === mint,
                       )
                       .sort((a, b) =>
-                        a.pubkey.toString() === wallet?.publicKey.toString()
-                          ? -1
-                          : 1,
+                        a.pubkey.toString() === publicKey?.toString() ? -1 : 1,
                       )}
                     mint={mint}
                     label

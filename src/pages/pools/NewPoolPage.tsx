@@ -9,10 +9,8 @@ import {
   Typography,
 } from 'antd';
 import { PublicKey } from '@solana/web3.js';
-import { useConnection } from '../../utils/connection';
 import FloatingElement from '../../components/layout/FloatingElement';
 import styled from '@emotion/styled';
-import { useWallet } from '../../utils/wallet';
 import { sendSignedTransaction, signTransactions } from '../../utils/send';
 import { useMintInput } from '../../components/useMintInput';
 import { PoolTransactions } from '@project-serum/pool';
@@ -20,6 +18,7 @@ import { useTokenAccounts } from '../../utils/markets';
 import BN from 'bn.js';
 import { notify } from '../../utils/notifications';
 import Link from '../../components/Link';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
 const { Text, Title } = Typography;
 
@@ -52,8 +51,8 @@ const PROGRAM_ID_OPTIONS = [
 ];
 
 export default function NewPoolPage() {
-  const connection = useConnection();
-  const { wallet, connected } = useWallet();
+  const {connection} = useConnection();
+  const { wallet, connected, publicKey, signAllTransactions } = useWallet();
   const [poolName, setPoolName] = useState('');
   const [programId, setProgramId] = useState(DEFAULT_PROGRAM_ID);
   const [initialSupply, setInitialSupply] = useState('1');
@@ -76,8 +75,8 @@ export default function NewPoolPage() {
   }, [programId]);
 
   useEffect(() => {
-    if (connected && wallet) {
-      setAdminAddress(wallet.publicKey.toBase58());
+    if (connected && wallet && publicKey) {
+      setAdminAddress(publicKey.toBase58());
     }
   }, [wallet, connected]);
 
@@ -95,60 +94,69 @@ export default function NewPoolPage() {
       return;
     }
     setSubmitting(true);
-    try {
-      const assets = initialAssets as ValidInitialAsset[];
-      const [
-        poolAddress,
-        transactionsAndSigners,
-      ] = await PoolTransactions.initializeSimplePool({
-        connection,
-        programId: new PublicKey(programId),
-        poolName,
-        poolStateSpace: 1024,
-        poolMintDecimals: 6,
-        initialPoolMintSupply: new BN(
-          Math.round(10 ** 6 * parseFloat(initialSupply)),
-        ),
-        assetMints: assets.map((asset) => asset.mint),
-        initialAssetQuantities: assets.map((asset) => new BN(asset.quantity)),
-        creator: wallet.publicKey,
-        creatorAssets: assets.map((asset) => {
-          const found = tokenAccounts?.find((tokenAccount) =>
-            tokenAccount.effectiveMint.equals(asset.mint),
-          );
-          if (!found) {
-            throw new Error('No token account for ' + asset.mint.toBase58());
+    if (publicKey) {
+      try {
+        const assets = initialAssets as ValidInitialAsset[];
+        const [poolAddress, transactionsAndSigners] =
+          await PoolTransactions.initializeSimplePool({
+            connection,
+            programId: new PublicKey(programId),
+            poolName,
+            poolStateSpace: 1024,
+            poolMintDecimals: 6,
+            initialPoolMintSupply: new BN(
+              Math.round(10 ** 6 * parseFloat(initialSupply)),
+            ),
+            assetMints: assets.map((asset) => asset.mint),
+            initialAssetQuantities: assets.map(
+              (asset) => new BN(asset.quantity),
+            ),
+            creator: publicKey,
+            creatorAssets: assets.map((asset) => {
+              const found = tokenAccounts?.find((tokenAccount) =>
+                tokenAccount.effectiveMint.equals(asset.mint),
+              );
+              if (!found) {
+                throw new Error(
+                  'No token account for ' + asset.mint.toBase58(),
+                );
+              }
+              return found.pubkey;
+            }),
+            additionalAccounts: adminControlled
+              ? [
+                  {
+                    pubkey: new PublicKey(adminAddress),
+                    isSigner: false,
+                    isWritable: false,
+                  },
+                ]
+              : [],
+          });
+        const signed = await signTransactions({
+          transactionsAndSigners,
+          wallet,
+          publicKey,
+          connection,
+          signAllTransactions
+        });
+        if (signed) {
+          for (let signedTransaction of signed) {
+            await sendSignedTransaction({ signedTransaction, connection });
           }
-          return found.pubkey;
-        }),
-        additionalAccounts: adminControlled
-          ? [
-              {
-                pubkey: new PublicKey(adminAddress),
-                isSigner: false,
-                isWritable: false,
-              },
-            ]
-          : [],
-      });
-      const signed = await signTransactions({
-        transactionsAndSigners,
-        wallet,
-        connection,
-      });
-      for (let signedTransaction of signed) {
-        await sendSignedTransaction({ signedTransaction, connection });
+        }
+
+        setNewPoolAddress(poolAddress);
+      } catch (e) {
+        console.warn(e);
+        notify({
+          message: 'Error creating new pool',
+          description: 'error',
+          type: 'error',
+        });
+      } finally {
+        setSubmitting(false);
       }
-      setNewPoolAddress(poolAddress);
-    } catch (e) {
-      console.warn(e);
-      notify({
-        message: 'Error creating new pool',
-        description: 'error',
-        type: 'error',
-      });
-    } finally {
-      setSubmitting(false);
     }
   }
 

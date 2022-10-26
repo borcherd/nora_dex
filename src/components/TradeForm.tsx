@@ -17,8 +17,7 @@ import { SwitchChangeEventHandler } from 'antd/es/switch';
 import { notify } from '../utils/notifications';
 import { refreshCache } from '../utils/fetch-loop';
 import tuple from 'immutable-tuple';
-import { useSendConnection } from '../utils/connection';
-import { useWallet } from '../utils/wallet';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import {
   floorToDecimal,
   getDecimalCount,
@@ -58,8 +57,8 @@ export default function TradeForm({
   const baseCurrencyAccount = useSelectedBaseCurrencyAccount();
   const quoteCurrencyAccount = useSelectedQuoteCurrencyAccount();
   const openOrdersAccount = useSelectedOpenOrdersAccount(true);
-  const { wallet, connected } = useWallet();
-  const sendConnection = useSendConnection();
+  const { wallet, connected, publicKey, signTransaction } = useWallet();
+  const {connection} = useConnection();
   const markPrice = useMarkPrice();
   useFeeDiscountKeys();
   const { storedFeeDiscountKey: feeDiscountKey } =
@@ -99,21 +98,21 @@ export default function TradeForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [price, baseSize]);
 
-  const walletPubkey = wallet?.publicKey;
+  const walletPubkey = publicKey;
   useEffect(() => {
     const warmUpCache = async () => {
       try {
-        if (!wallet || !wallet.publicKey || !market) {
+        if (!wallet || !publicKey || !market) {
           console.log(`Skipping refreshing accounts`);
           return;
         }
         const startTime = getUnixTs();
         console.log(`Refreshing accounts for ${market.address}`);
         await market?.findOpenOrdersAccountsForOwner(
-          sendConnection,
-          wallet.publicKey,
+          connection,
+          publicKey,
         );
-        await market?.findBestFeeDiscountKey(sendConnection, wallet.publicKey);
+        await market?.findBestFeeDiscountKey(connection, publicKey);
         const endTime = getUnixTs();
         console.log(
           `Finished refreshing accounts for ${market.address} after ${
@@ -127,7 +126,7 @@ export default function TradeForm({
     warmUpCache();
     const id = setInterval(warmUpCache, 30_000);
     return () => clearInterval(id);
-  }, [market, sendConnection, wallet, walletPubkey]);
+  }, [market, connection, wallet, walletPubkey]);
 
   const onSetBaseSize = (baseSize: number | undefined) => {
     setBaseSize(baseSize);
@@ -242,18 +241,20 @@ export default function TradeForm({
 
     setSubmitting(true);
     try {
-      if (wallet) {
+      if (wallet && publicKey) {
         await placeOrder({
           side,
           price,
           size: baseSize,
           orderType: ioc ? 'ioc' : postOnly ? 'postOnly' : 'limit',
           market,
-          connection: sendConnection,
+          connection: connection,
           wallet,
+          publicKey,
           baseCurrencyAccount: baseCurrencyAccount?.pubkey,
           quoteCurrencyAccount: quoteCurrencyAccount?.pubkey,
           feeDiscountPubkey: feeDiscountKey,
+          signTransaction
         });
         refreshCache(tuple('getTokenAccounts', wallet, connected));
         setPrice(undefined);
@@ -276,7 +277,8 @@ export default function TradeForm({
   // @ts-ignore
   return (
     <FloatingElement
-      style={{ display: 'flex', flexDirection: 'column', ...style }} stretchVertical={false}
+      style={{ display: 'flex', flexDirection: 'column', ...style }}
+      stretchVertical={false}
     >
       <div style={{ flex: 1 }}>
         <Row>
@@ -289,7 +291,9 @@ export default function TradeForm({
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                side === 'buy' ? `2px solid ${PRIMARY_PINK}` : '2px solid #1C274F',
+                side === 'buy'
+                  ? `2px solid ${PRIMARY_PINK}`
+                  : '2px solid #1C274F',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',
@@ -309,7 +313,9 @@ export default function TradeForm({
               textAlign: 'center',
               border: 'transparent',
               borderBottom:
-                side === 'sell' ? `2px solid ${PRIMARY_PINK}` : '2px solid #1C274F',
+                side === 'sell'
+                  ? `2px solid ${PRIMARY_PINK}`
+                  : '2px solid #1C274F',
               background: 'transparent',
               fontSize: 14,
               fontStyle: 'normal',

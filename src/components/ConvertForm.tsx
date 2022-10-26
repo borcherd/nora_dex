@@ -10,13 +10,13 @@ import {
   getSelectedTokenAccountForMint,
   MarketProvider,
   useBalances,
-  useCustomMarkets, useLocallyStoredFeeDiscountKey,
+  useCustomMarkets,
+  useLocallyStoredFeeDiscountKey,
   useMarket,
   useTokenAccounts,
 } from '../utils/markets';
 import { notify } from '../utils/notifications';
-import { useWallet } from '../utils/wallet';
-import { useConnection, useSendConnection } from '../utils/connection';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { placeOrder } from '../utils/send';
 import { floorToDecimal, getDecimalCount } from '../utils/utils';
 import FloatingElement from './layout/FloatingElement';
@@ -24,15 +24,16 @@ import WalletConnect from './WalletConnect';
 import { SwapOutlined } from '@ant-design/icons';
 import { CustomMarketInfo } from '../utils/types';
 // import Wallet from '@project-serum/sol-wallet-adapter';
-import { WalletAdapter } from '../wallet-adapters';
 import { PRIMARY_PINK } from 'consts/colors.consts';
+import { PublicKey } from '@solana/web3.js';
+import { SignerWalletAdapterProps } from '@solana/wallet-adapter-base';
 
 const { Option } = Select;
 const { Title } = Typography;
 
 const ActionButton = styled(Button)`
-color:${PRIMARY_PINK};
-background-color: #212734;
+  color: ${PRIMARY_PINK};
+  background-color: #212734;
   border-width: 0px;
 `;
 
@@ -42,7 +43,7 @@ const ConvertButton = styled(Button)`
 `;
 
 export default function ConvertForm() {
-  const { connected, wallet } = useWallet(); 
+  const { connected, wallet, publicKey, signTransaction } = useWallet();
   const { customMarkets } = useCustomMarkets();
   const marketInfos = getMarketInfos(customMarkets);
   const [marketAddress, setMarketAddress] = useState<string | null>(null);
@@ -147,14 +148,18 @@ export default function ConvertForm() {
               marketAddress={marketAddress}
               setMarketAddress={setMarketAddress}
             >
-              <ConvertFormSubmit
-                size={size}
-                setSize={setSize}
-                fromToken={fromToken}
-                toToken={toToken}
-                wallet={wallet}
-                customMarkets={customMarkets}
-              />
+              {publicKey ? (
+                <ConvertFormSubmit
+                  size={size}
+                  setSize={setSize}
+                  fromToken={fromToken}
+                  toToken={toToken}
+                  wallet={wallet}
+                  publicKey={publicKey}
+                  customMarkets={customMarkets}
+                  signTransaction={signTransaction}
+                />
+              ) : ''}
             </MarketProvider>
           )}
         </>
@@ -169,24 +174,30 @@ function ConvertFormSubmit({
   fromToken,
   toToken,
   wallet,
+  publicKey,
   customMarkets,
+  signTransaction
 }: {
   size: number | null | undefined;
   setSize: (newSize: number | undefined) => void;
   fromToken: string;
   toToken: string;
-  wallet?: WalletAdapter;
+  wallet?: any;
+  publicKey: PublicKey;
   customMarkets: CustomMarketInfo[];
+  signTransaction: SignerWalletAdapterProps['signTransaction'] | undefined
+
 }) {
   const { market } = useMarket();
+
   const [accounts] = useTokenAccounts();
   const balances = useBalances();
   const [fromAmount, setFromAmount] = useState<number | undefined>();
   const [toAmount, setToAmount] = useState<number | undefined>();
-  const { storedFeeDiscountKey: feeDiscountKey } = useLocallyStoredFeeDiscountKey();
+  const { storedFeeDiscountKey: feeDiscountKey } =
+    useLocallyStoredFeeDiscountKey();
 
-  const connection = useConnection();
-  const sendConnection = useSendConnection();
+  const { connection } = useConnection();
 
   const [isConverting, setIsConverting] = useState(false);
 
@@ -237,6 +248,7 @@ function ConvertFormSubmit({
     const sidedOrderbookAccount =
       // @ts-ignore
       side === 'buy' ? market._decoded.asks : market._decoded.bids;
+    const x = await connection;
     const orderbookData = await connection.getAccountInfo(
       sidedOrderbookAccount,
     );
@@ -281,11 +293,13 @@ function ConvertFormSubmit({
         size: parsedSize,
         orderType: 'ioc',
         market,
-        connection: sendConnection,
+        connection: connection,
         wallet,
+        publicKey,
         baseCurrencyAccount: baseCurrencyAccount?.pubkey,
         quoteCurrencyAccount: quoteCurrencyAccount?.pubkey,
         feeDiscountPubkey: feeDiscountKey,
+        signTransaction
       });
     } catch (e) {
       console.warn(e);

@@ -4,9 +4,9 @@ import FloatingElement from '../../../components/layout/FloatingElement';
 import { Typography } from 'antd';
 import { MintInfo } from '../../../utils/tokens';
 import { useAsyncData } from '../../../utils/fetch-loop';
-import { useConnection } from '../../../utils/connection';
 import tuple from 'immutable-tuple';
 import PoolBasketDisplay from './PoolBasketDisplay';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 const { Text, Paragraph } = Typography;
 
@@ -22,7 +22,7 @@ const feeFormat = new Intl.NumberFormat(undefined, {
 });
 
 export default function PoolInfoPanel({ poolInfo, mintInfo }: PoolInfoProps) {
-  const connection = useConnection();
+  const {connection} = useConnection();
 
   const [totalBasket] = useAsyncData(
     () => getPoolBasket(connection, poolInfo, { redeem: mintInfo.supply }),

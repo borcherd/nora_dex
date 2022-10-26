@@ -1,8 +1,6 @@
 import React, { useContext } from 'react';
 import { sleep, useLocalStorageState } from './utils';
 import { useInterval } from './useInterval';
-import { useConnection } from './connection';
-import { useWallet } from './wallet';
 import {
   getCachedMarket,
   getCachedOpenOrderAccounts,
@@ -14,6 +12,7 @@ import {
 import { settleFunds } from './send';
 import { PreferencesContextValues } from './types';
 import { getAssociatedTokenAddress } from '@project-serum/associated-token';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
 const PreferencesContext = React.createContext<PreferencesContextValues | null>(
   null,
@@ -26,77 +25,77 @@ export function PreferencesProvider({ children }) {
   );
 
   const [tokenAccounts] = useTokenAccounts();
-  const { connected, wallet } = useWallet();
+  const { connected, wallet, publicKey, signTransaction } = useWallet();
   const marketInfoList = useMarketInfos();
   const [currentlyAutoSettling, setCurrentlyAutoSettling] =
     useCurrentlyAutoSettling();
-  const connection = useConnection();
+  const {connection} = useConnection();
 
   useInterval(() => {
     const autoSettle = async () => {
-      if (!wallet) {
+      if (!wallet && !publicKey) {
         return;
       }
       setCurrentlyAutoSettling(true);
-      for (const marketInfo of marketInfoList) {
-        try {
-          console.log(
-            `Autosettling ${marketInfo.name} ${marketInfo.address.toString()}`,
-          );
-          const market = await getCachedMarket(
-            connection,
-            marketInfo.address,
-            marketInfo.programId,
-          );
-          const openOrderAccounts = await getCachedOpenOrderAccounts(
-            connection,
-            market,
-            wallet.publicKey,
-          );
-          // settle funds into selected token wallets
-          const [baseAssocTokenAddress, quoteAssocTokenAddress] =
-            await Promise.all([
-              getAssociatedTokenAddress(
-                wallet.publicKey,
-                market.baseMintAddress,
-              ),
-              getAssociatedTokenAddress(
-                wallet.publicKey,
-                market.quoteMintAddress,
-              ),
-            ]);
-          const baseCurrencyAccount = getSelectedTokenAccountForMint(
-            tokenAccounts,
-            market.baseMintAddress,
-            baseAssocTokenAddress,
-          );
-          const quoteCurrencyAccount = getSelectedTokenAccountForMint(
-            tokenAccounts,
-            market.quoteMintAddress,
-            quoteAssocTokenAddress,
-          );
-          const openOrders = openOrderAccounts.find((oo) =>
-            oo.market.equals(marketInfo.address),
-          );
-          if (baseCurrencyAccount && quoteCurrencyAccount && openOrders) {
-            await settleFunds({
-              market,
-              openOrders,
+      if (wallet && publicKey) {
+        for (const marketInfo of marketInfoList) {
+          try {
+            console.log(
+              `Autosettling ${
+                marketInfo.name
+              } ${marketInfo.address.toString()}`,
+            );
+            const market = await getCachedMarket(
               connection,
-              wallet,
-              baseCurrencyAccount,
-              quoteCurrencyAccount,
-            });
-            await sleep(1000);
+              marketInfo.address,
+              marketInfo.programId,
+            );
+            const openOrderAccounts = await getCachedOpenOrderAccounts(
+              connection,
+              market,
+              publicKey,
+            );
+            // settle funds into selected token wallets
+            const [baseAssocTokenAddress, quoteAssocTokenAddress] =
+              await Promise.all([
+                getAssociatedTokenAddress(publicKey, market.baseMintAddress),
+                getAssociatedTokenAddress(publicKey, market.quoteMintAddress),
+              ]);
+            const baseCurrencyAccount = getSelectedTokenAccountForMint(
+              tokenAccounts,
+              market.baseMintAddress,
+              baseAssocTokenAddress,
+            );
+            const quoteCurrencyAccount = getSelectedTokenAccountForMint(
+              tokenAccounts,
+              market.quoteMintAddress,
+              quoteAssocTokenAddress,
+            );
+            const openOrders = openOrderAccounts.find((oo) =>
+              oo.market.equals(marketInfo.address),
+            );
+            if (baseCurrencyAccount && quoteCurrencyAccount && openOrders) {
+              await settleFunds({
+                market,
+                openOrders,
+                connection,
+                wallet,
+                publicKey,
+                baseCurrencyAccount,
+                quoteCurrencyAccount,
+                signTransaction
+              });
+              await sleep(1000);
+            }
+          } catch (e) {
+            console.log('Error auto settling funds: ' + 'error');
           }
-        } catch (e) {
-          console.log('Error auto settling funds: ' + 'error');
         }
       }
+
       setCurrentlyAutoSettling(false);
     };
     connected &&
-      wallet?.autoApprove &&
       autoSettleEnabled &&
       !currentlyAutoSettling &&
       autoSettle();

@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 
 import { Button, Col, Row } from 'antd';
 import { cancelOrder } from '../../utils/send';
-import { useWallet } from '../../utils/wallet';
-import { useSendConnection } from '../../utils/connection';
 import { notify } from '../../utils/notifications';
 import { OrderWithMarketAndMarketName } from '../../utils/types';
 import styled from '@emotion/styled';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 
 const CancelButton = styled(Button)`
   color: rgba(241, 241, 242, 1);
@@ -33,20 +32,22 @@ export default function OpenOrderTable({
   loading?: boolean;
   marketFilter?: boolean;
 }) {
-  let { wallet } = useWallet();
-  let connection = useSendConnection();
+  let { wallet, publicKey, signTransaction } = useWallet();
+  let {connection} = useConnection();
 
   const [cancelId, setCancelId] = useState(null);
 
   async function cancel(order) {
     setCancelId(order?.orderId);
     try {
-      if (wallet) {
+      if (wallet && publicKey) {
       await cancelOrder({
         order,
         market: order.market,
         connection,
         wallet,
+        publicKey,
+        signTransaction
       });
     } else {
       throw Error('Error cancelling order')

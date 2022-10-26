@@ -1,24 +1,24 @@
 import React from 'react';
 import { Dropdown, Menu } from 'antd';
-import { useWallet } from '../utils/wallet';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+
 import LinkAddress from './LinkAddress';
+import styled from '@emotion/styled';
+import { WalletMultiButton } from '@solana/wallet-adapter-ant-design';
+
+export const ButtonWrapper = styled.div({
+  '.wallet-multi-button':{
+    display:'flex',
+    gap:'15px',
+    justifyContent:'center',
+    alignItems:'center'
+  }
+});
 
 export default function WalletConnect() {
-  const { connected, wallet, select, connect, disconnect } = useWallet();
-  const publicKey = (connected && wallet?.publicKey?.toBase58()) || '';
-
-  const menu = (
-    <Menu>
-      {connected && <LinkAddress shorten={true} address={publicKey} />}
-      <Menu.Item key="3" onClick={select}>
-        Change Wallet
-      </Menu.Item>
-    </Menu>
-  );
-
   return (
-    <Dropdown.Button onClick={connected ? disconnect : connect} overlay={menu}>
-      {connected ? 'Disconnect' : 'Connect'}
-    </Dropdown.Button>
+    <ButtonWrapper>
+      <WalletMultiButton className={'wallet-multi-button'}/>
+    </ButtonWrapper>
   );
 }

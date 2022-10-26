@@ -2,7 +2,6 @@ import { Col, Row, Menu } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo_white_text from '../assets/logo_white_text.png'
-import { ENDPOINTS, useConnectionConfig } from '../utils/connection';
 import CustomClusterEndpointDialog from './CustomClusterEndpointDialog';
 import { EndpointInfo } from '../utils/types';
 import { notify } from '../utils/notifications';
@@ -11,6 +10,8 @@ import WalletConnect from './WalletConnect';
 import { getTradePageUrl } from '../utils/markets';
 import { PRIMARY_PINK } from 'consts/colors.consts';
 import styled from '@emotion/styled';
+import { useConnection } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-ant-design';
 
 const Wrapper = styled.div`
   background: transparent; 
@@ -48,65 +49,10 @@ const MENU = [
 ];
 
 export default function TopBar() {
-  const { endpointInfo, setEndpoint, availableEndpoints, setCustomEndpoints } =
-    useConnectionConfig();
   const [addEndpointVisible, setAddEndpointVisible] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const location = useLocation();
   const history = useNavigate();
-
-  const onAddCustomEndpoint = (info: EndpointInfo) => {
-    const existingEndpoint = availableEndpoints.some(
-      (e) => e.endpoint === info.endpoint,
-    );
-    if (existingEndpoint) {
-      notify({
-        message: `An endpoint with the given url already exists`,
-        type: 'error',
-      });
-      return;
-    }
-
-    const handleError = (e) => {
-      console.log(`Connection to ${info.endpoint} failed: ${e}`);
-      notify({
-        message: `Failed to connect to ${info.endpoint}`,
-        type: 'error',
-      });
-    };
-
-    try {
-      const connection = new Connection(info.endpoint, 'recent');
-      connection
-        .getEpochInfo()
-        .then((result) => {
-          setTestingConnection(true);
-          console.log(`testing connection to ${info.endpoint}`);
-          const newCustomEndpoints = [
-            ...availableEndpoints.filter((e) => e.custom),
-            info,
-          ];
-          setEndpoint(info.endpoint);
-          setCustomEndpoints(newCustomEndpoints);
-        })
-        .catch(handleError);
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setTestingConnection(false);
-    }
-  };
-
-  const endpointInfoCustom = endpointInfo && endpointInfo.custom;
-  useEffect(() => {
-    const handler = () => {
-      if (endpointInfoCustom) {
-        setEndpoint(ENDPOINTS[0].endpoint);
-      }
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [endpointInfoCustom, setEndpoint]);
 
   const tradePageUrl = location.pathname.startsWith('/market/')
     ? location.pathname
@@ -145,12 +91,7 @@ export default function TopBar() {
 
   return (
     <>
-      <CustomClusterEndpointDialog
-        visible={addEndpointVisible}
-        testingConnection={testingConnection}
-        onAddCustomEndpoint={onAddCustomEndpoint}
-        onClose={() => setAddEndpointVisible(false)}
-      />
+      
       <Wrapper >
         <Row wrap={false} style={{ paddingTop: 25, height: 70 }}>
           <Col flex="none">
@@ -164,7 +105,7 @@ export default function TopBar() {
             {menuDiv}
           </Col>
           <Col flex="none" style={{ paddingRight: 20 }}>
-            <WalletConnect />
+            <WalletConnect/>
           </Col>
         </Row>
       </Wrapper>

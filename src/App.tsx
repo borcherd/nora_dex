@@ -1,29 +1,26 @@
 import React, { Suspense } from 'react';
 import './App.less';
-import { ConnectionProvider } from './utils/connection';
-import { WalletProvider } from './utils/wallet';
 import { GlobalStyle } from './global_style';
 import { Global } from '@emotion/react';
 import { Spin } from 'antd';
 import { RoutesComp } from './routes';
 import { ReferrerProvider } from './utils/referrer';
 import { JupiterAppProvider } from 'components/jupiter/JupiterAppProvider';
+import { ContextProvider } from 'contexts';
 
 export default function App() {
   return (
     <Suspense fallback={() => <Spin size="large" />}>
       <Global styles={GlobalStyle} />
-      <ConnectionProvider>
+      <ContextProvider>
         <ReferrerProvider>
-          <WalletProvider>
-            <JupiterAppProvider>
-              <Suspense fallback={() => <Spin size="large" />}>
-                <RoutesComp />
-              </Suspense>
-            </JupiterAppProvider>
-          </WalletProvider>
+          <JupiterAppProvider>
+            <Suspense fallback={() => <Spin size="large" />}>
+              <RoutesComp />
+            </Suspense>
+          </JupiterAppProvider>
         </ReferrerProvider>
-      </ConnectionProvider>
+      </ContextProvider>
     </Suspense>
   );
 }

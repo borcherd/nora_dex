@@ -1,17 +1,16 @@
 import { JupiterProvider } from "@jup-ag/react-hook";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import React from "react";
-import { useConnection } from "utils/connection";
-import { useWallet } from "utils/wallet";
 
 export const JupiterAppProvider = ({ children }) => {
-    const connection = useConnection();
-    const {  wallet } = useWallet(); 
+    const {connection} = useConnection();
+    const { publicKey } = useWallet(); 
     
     return (
       <JupiterProvider
         cluster="mainnet-beta"
         connection={connection}
-        userPublicKey={wallet?.publicKey}
+        userPublicKey={publicKey || undefined} 
       >
         {children}
       </JupiterProvider>

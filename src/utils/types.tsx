@@ -2,7 +2,8 @@ import { AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import { Market, OpenOrders } from '@project-serum/serum';
 import { Event } from '@project-serum/serum/lib/queue';
 import { Order } from '@project-serum/serum/lib/market';
-import { WalletAdapter } from '../wallet-adapters';
+import { Wallet } from '@solana/wallet-adapter-react';
+
 
 export interface ConnectionContextValues {
   endpoint: string;
@@ -14,7 +15,7 @@ export interface ConnectionContextValues {
 }
 
 export interface WalletContextValues {
-  wallet: WalletAdapter | undefined;
+  wallet: Wallet | undefined;
   connected: boolean;
   providerUrl: string;
   setProviderUrl: (newProviderUrl: string) => void;

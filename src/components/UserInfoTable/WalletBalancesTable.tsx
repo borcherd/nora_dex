@@ -3,8 +3,6 @@ import DataTable from '../layout/DataTable';
 import { Button, Row } from 'antd';
 import { settleAllFunds } from '../../utils/send';
 import { notify } from '../../utils/notifications';
-import { useConnection } from '../../utils/connection';
-import { useWallet } from '../../utils/wallet';
 import {
   useAllMarkets,
   useSelectedTokenAccounts,
@@ -13,6 +11,7 @@ import {
 import StandaloneTokenAccountsSelect from '../StandaloneTokenAccountSelect';
 import { abbreviateAddress } from '../../utils/utils';
 import { PublicKey } from '@solana/web3.js';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
 export default function WalletBalancesTable({
   walletBalances,
@@ -25,8 +24,8 @@ export default function WalletBalancesTable({
     openOrdersTotal: number;
   }[];
 }) {
-  const connection = useConnection();
-  const { wallet, connected } = useWallet();
+  const {connection} = useConnection();
+  const { wallet, connected, publicKey, signTransaction } = useWallet();
   const [selectedTokenAccounts] = useSelectedTokenAccounts();
   const [tokenAccounts, tokenAccountsConnected] = useTokenAccounts();
   const [allMarkets, allMarketsConnected] = useAllMarkets();
@@ -43,7 +42,7 @@ export default function WalletBalancesTable({
         });
         return;
       }
-      
+
       if (!tokenAccounts || !tokenAccountsConnected) {
         notify({
           message: 'Error settling funds',
@@ -60,13 +59,17 @@ export default function WalletBalancesTable({
         });
         return;
       }
-      await settleAllFunds({
-        connection,
-        tokenAccounts,
-        selectedTokenAccounts,
-        wallet,
-        markets: allMarkets.map((marketInfo) => marketInfo.market),
-      });
+      if (publicKey) {
+        await settleAllFunds({
+          connection,
+          tokenAccounts,
+          selectedTokenAccounts,
+          wallet,
+          publicKey,
+          markets: allMarkets.map((marketInfo) => marketInfo.market),
+          signTransaction
+        });
+      }
     } catch (e) {
       notify({
         message: 'Error settling funds',

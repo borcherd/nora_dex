@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Button, Form, Input, Tooltip, Typography } from 'antd';
 import { notify } from '../utils/notifications';
 import { MARKETS } from '@project-serum/serum';
-import { useConnection } from '../utils/connection';
 import FloatingElement from '../components/layout/FloatingElement';
-import { useWallet } from '../utils/wallet';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { listMarket } from '../utils/send';
 import { useMintInput } from '../components/useMintInput';
 import styled from '@emotion/styled';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 const { Text, Title } = Typography;
 
@@ -20,8 +20,8 @@ const Wrapper = styled.div`
 `;
 
 export default function ListNewMarketPage() {
-  const connection = useConnection();
-  const { wallet, connected } = useWallet();
+  const { connection } = useConnection();
+  const { wallet, connected, publicKey } = useWallet();
   const [baseMintInput, baseMintInfo] = useMintInput(
     'baseMint',
     <Text>
@@ -90,6 +90,7 @@ export default function ListNewMarketPage() {
       const marketAddress = await listMarket({
         connection,
         wallet,
+        publicKey,
         baseMint: baseMintInfo.address,
         quoteMint: quoteMintInfo.address,
         baseLotSize,

@@ -1,3 +1,4 @@
+import { useConnection } from '@solana/wallet-adapter-react';
 import { Account, AccountInfo, Connection, PublicKey } from '@solana/web3.js';
 import tuple from 'immutable-tuple';
 import React, { useContext, useEffect, useMemo, useRef } from 'react';
@@ -115,42 +116,11 @@ export function ConnectionProvider({ children }) {
   );
 }
 
-export function useConnection() {
-  const context = useContext(ConnectionContext);
-  if (!context) {
-    throw new Error('Missing connection context');
-  }
-  return context.connection;
-}
-
-export function useSendConnection() {
-  const context = useContext(ConnectionContext);
-  if (!context) {
-    throw new Error('Missing connection context');
-  }
-  return context.sendConnection;
-}
-
-export function useConnectionConfig() {
-  const context = useContext(ConnectionContext);
-  if (!context) {
-    throw new Error('Missing connection context');
-  }
-  return {
-    endpoint: context.endpoint,
-    endpointInfo: context.availableEndpoints.find(
-      (info) => info.endpoint === context.endpoint,
-    ),
-    setEndpoint: context.setEndpoint,
-    availableEndpoints: context.availableEndpoints,
-    setCustomEndpoints: context.setCustomEndpoints,
-  };
-}
 
 export function useAccountInfo(
   publicKey: PublicKey | undefined | null,
 ): [AccountInfo<Buffer> | null | undefined, boolean] {
-  const connection = useConnection();
+  const {connection} = useConnection();
   const cacheKey = tuple(connection, publicKey?.toBase58());
   const [accountInfo, loaded] = useAsyncData<AccountInfo<Buffer> | null>(
     async () => (publicKey ? connection.getAccountInfo(publicKey) : null),

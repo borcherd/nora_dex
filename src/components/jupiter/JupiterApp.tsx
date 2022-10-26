@@ -6,8 +6,7 @@ import JSBI from 'jsbi';
 import { Button, Form, Input, InputNumber, Select } from 'antd';
 
 import * as styled from './JupiterApp.styled';
-import { useWallet } from 'utils/wallet';
-import { useConnection } from 'utils/connection';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { getWalletTokenAccounts } from 'utils/tokens';
 import {
   IFormProps,
@@ -18,20 +17,28 @@ import {
   IConvertedAccount,
 } from 'models/jupiter';
 import { useForm } from 'react-hook-form';
-import { sendTransaction } from 'utils/send';
+import { notify } from 'utils/notifications';
 
 const { Option, OptGroup } = Select;
 
 export const JupiterApp = () => {
-  const { connected, wallet: userWallet } = useWallet();
-  
-  const connection = useConnection();
+  const {
+    connected,
+    wallet,
+    publicKey,
+    sendTransaction,
+    signAllTransactions,
+    signTransaction,
+  } = useWallet();
+
+  const { connection } = useConnection();
 
   const [tokens, setTokens] = useState<IToken[]>([]);
   const [tokenAccounts, setTokenAccounts] = useState<ISplAccounts[]>([]);
   const [mergedTokenList, setMergedTokenList] = useState<IMergedTokens[]>([]);
 
   const [attemptingSwap, setAttemptingSwap] = useState<boolean>(false);
+  const [searching, setSearching] = useState<boolean>(false);
 
   const [antdForm] = Form.useForm();
   const form = useForm<IFormProps>({
@@ -144,10 +151,10 @@ export const JupiterApp = () => {
   };
 
   async function GetTokenAccounts() {
-    if (userWallet) {
+    if (wallet && connection && publicKey) {
       const _tokenAccounts = await getWalletTokenAccounts({
         connection: connection,
-        walletKey: userWallet.publicKey,
+        walletKey: publicKey,
       });
       setTokenAccounts(_tokenAccounts);
       const _mergedTokenList = mergeTokens(
@@ -160,63 +167,94 @@ export const JupiterApp = () => {
   }
 
   useEffect(() => {
-    if (connected && userWallet) {
+    if (connected && wallet) {
       GetTokenAccounts();
     }
   }, [connected]);
 
   const calculateBestRoute = async (values: any) => {
+    setSearching(true);
     setAttemptingSwap(true);
     form.setValue('inputToken', new PublicKey(values.inputToken));
     form.setValue('outputToken', new PublicKey(values.outputToken));
     form.setValue('amount', values.amount as number);
 
-    // throw error when decimals arent found
-    form.setValue(
-      'decimals',
-      mergedTokenList?.find(
-        (token) => token.mint.toString() === formWatch.inputToken.toString(),
-      )?.decimals ?? 9,
-    );
 
+    let dec = mergedTokenList.find(
+      (value) =>
+        value.mint.toString() === values.inputToken.toString(),
+    )?.decimals;
+    if (dec === undefined) {
+      throw new Error("decimals of input not found");
+      
+    } else {
+      form.setValue('decimals', dec)
+
+    }
     refresh();
   };
 
   const swap = async (idx: number) => {
-    if (useableRoutes && userWallet) {
+    if (
+      useableRoutes &&
+      wallet &&
+      publicKey &&
+      signAllTransactions &&
+      signTransaction
+    ) {
       const _selectedRoute = useableRoutes[idx];
 
       console.log(_selectedRoute.inAmount);
       console.log(_selectedRoute.outAmount);
 
+
+
       const swapResult: any = await exchange({
         routeInfo: _selectedRoute,
         wallet: {
           sendTransaction: sendTransaction,
-          signAllTransactions: userWallet.signAllTransactions,
-          signTransaction: userWallet.signTransaction,
-        },userPublicKey: userWallet.publicKey
+          signAllTransactions: signAllTransactions,
+          signTransaction: signTransaction,
+        },
+        userPublicKey: publicKey,
       });
 
       if (swapResult.error) {
         console.log(swapResult.error);
+        notify({ message: 'Swap failed', type: 'error' });
       } else {
+        notify({
+          message: `Swap succes. TXiD: ${swapResult.txid}`,
+          type: 'success',
+        });
         console.log(`https://explorer.solana.com/tx/${swapResult.txid}`);
-        console.log(
-          `inputAddress=${swapResult.inputAddress.toString()} outputAddress=${swapResult.outputAddress.toString()}`,
-        );
-        console.log(
-          `inputAmount=${swapResult.inputAmount} outputAmount=${swapResult.outputAmount}`,
-        );
+        antdForm.resetFields()
+        form.reset()
       }
+    }
+  };
+
+  const getDecimals = (route: RouteInfo) => {
+    const dec = mergedTokenList.find(
+      (value) =>
+        value.mint.toString() === route.marketInfos[0].outputMint.toString(),
+    )?.decimals;
+
+    if (dec === undefined) {
+      console.log(
+        'decimals of outputToken not found, so outputValue might be wrong',
+      );
+      return 8;
+    } else {
+      return dec;
     }
   };
 
   return (
     <>
       {connected ? (
-        <Form form={antdForm} onFinish={calculateBestRoute}>
-          <styled.wrapper>
+        <styled.wrapper>
+          <Form form={antdForm} onFinish={calculateBestRoute} name="form">
             <styled.SelectWrapper>
               <h3>Input token:</h3>
               <Form.Item
@@ -327,65 +365,74 @@ export const JupiterApp = () => {
                 </Button>
               </div>
             </styled.InputWrapper>
-            <Button htmlType="submit">Calculate best route</Button>
+            <Button htmlType="submit" className="form-button">
+              Calculate best route
+            </Button>
+          </Form>
 
-            {useableRoutes.length > 0 && mergedTokenList ? (
-              <styled.RoutesWrapper>
-                {useableRoutes.slice(0, 2).map((route, idx) => {
-                  return (
-                    <>
-                      <div
-                        className={
-                          selectedRoute === idx
-                            ? 'route-wrapper selected'
-                            : 'route-wrapper'
-                        }
-                        onClick={() => setSelectedRoute(idx)}
-                      >
-                        <div className="section">
-                          <h3 className="route">
-                            {route.marketInfos[0].amm.label}
-                          </h3>
-                          <h3>
-                            {Math.round(
-                              (route.marketInfos[0].outAmount[0] / 10 ** 8) *
-                                100000,
-                            ) / 100000}
-                            {/* Change to outputdecimals */}
-                          </h3>
-                        </div>
-                        <div className="section">
-                          <h4>
-                            {mergedTokenList.find(
+          {useableRoutes.length > 0 && mergedTokenList && searching ? (
+            <styled.RoutesWrapper>
+              {useableRoutes.slice(0, 2).map((route, idx) => {
+                return (
+                  <>
+                    <div
+                      className={
+                        selectedRoute === idx
+                          ? 'route-wrapper selected'
+                          : 'route-wrapper'
+                      }
+                      onClick={() => setSelectedRoute(idx)}
+                    >
+                      <div className="section">
+                        <h3 className="route">
+                          {route.marketInfos[0].amm.label}
+                        </h3>
+                        <h3>
+                          {Math.round(
+                            (route.marketInfos[0].outAmount[0] /
+                              10 ** getDecimals(route)) *
+                              100000,
+                          ) / 100000}
+                          {/* Change to outputdecimals */}
+                        </h3>
+                      </div>
+                      <div className="section">
+                        <h4>
+                          {mergedTokenList.find(
+                            (value) =>
+                              value.mint.toString() ===
+                              route.marketInfos[0].inputMint.toString(),
+                          )?.symbol +
+                            '->' +
+                            mergedTokenList.find(
                               (value) =>
                                 value.mint.toString() ===
-                                route.marketInfos[0].inputMint.toString(),
-                            )?.symbol +
-                              '->' +
-                              mergedTokenList.find(
-                                (value) =>
-                                  value.mint.toString() ===
-                                  route.marketInfos[0].outputMint.toString(),
-                              )?.symbol}
-                          </h4>
-                        </div>
+                                route.marketInfos[0].outputMint.toString(),
+                            )?.symbol}
+                        </h4>
                       </div>
-                    </>
-                  );
-                })}
-                {console.log(routes)}
-                {selectedRoute != undefined && routes && (
-                  <Button onClick={() => swap(selectedRoute)}>Swap</Button>
-                )}
-              </styled.RoutesWrapper>
-            ) : (
-              <>
-                {' '}
-                {attemptingSwap ? <styled.LoadingSwap /> : 'no routes found'}
-              </>
-            )}
-          </styled.wrapper>
-        </Form>
+                    </div>
+                  </>
+                );
+              })}
+              {console.log(routes)}
+              {selectedRoute != undefined && routes && (
+                <Button onClick={() => swap(selectedRoute)}>Swap</Button>
+              )}
+            </styled.RoutesWrapper>
+          ) : (
+            <>
+              {' '}
+              {attemptingSwap ? (
+                <styled.LoadingSwap />
+              ) : searching ? (
+                'no routes found'
+              ) : (
+                ''
+              )}{' '}
+            </>
+          )}
+        </styled.wrapper>
       ) : (
         <h3>Please connect your wallet before attempting a swap.</h3>
       )}

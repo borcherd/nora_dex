@@ -4,10 +4,9 @@ import {
   useTokenAccounts,
   getSelectedTokenAccountForMint,
 } from '../../utils/markets';
-import { useSendConnection } from '../../utils/connection';
-import { useWallet } from '../../utils/wallet';
 import { settleFunds } from '../../utils/send';
 import { notify } from '../../utils/notifications';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 
 export default function BalancesTable({
   balances,
@@ -16,16 +15,19 @@ export default function BalancesTable({
   onSettleSuccess,
 }) {
   const [accounts] = useTokenAccounts();
-  const connection = useSendConnection();
-  const { wallet } = useWallet();
+  const { connection } = useConnection();
+  const { wallet, publicKey, signTransaction } = useWallet();
 
   async function onSettleFunds(market, openOrders) {
+    console.log(market);
+    console.log(openOrders);
     try {
       await settleFunds({
         market,
         openOrders,
         connection,
         wallet,
+        publicKey,
         baseCurrencyAccount: getSelectedTokenAccountForMint(
           accounts,
           market?.baseMintAddress,
@@ -34,11 +36,12 @@ export default function BalancesTable({
           accounts,
           market?.quoteMintAddress,
         ),
+        signTransaction,
       });
     } catch (e) {
       notify({
         message: 'Error settling funds',
-        description: 'error',
+        description: e.message,
         type: 'error',
       });
       return;

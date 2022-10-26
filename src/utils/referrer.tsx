@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useConnection } from './connection';
 import { PublicKey } from '@solana/web3.js';
 import {
   NameRegistryState,
@@ -9,6 +8,7 @@ import {
 } from '@solana/spl-name-service';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useLocalStorageState } from './utils';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 interface ReferrerContextValues {
   usdcRef: PublicKey | undefined;
@@ -61,7 +61,7 @@ export const getInputKey = async (input: string) => {
 };
 
 export const useFeesAccountsFromRefCode = (refCode: string | undefined) => {
-  const connection = useConnection();
+  const {connection} = useConnection();
   const [usdc, setUsdc] = useState<PublicKey | undefined>(undefined);
   const [usdt, setUsdt] = useState<PublicKey | undefined>(undefined);
 

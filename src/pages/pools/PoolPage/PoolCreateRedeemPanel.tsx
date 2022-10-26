@@ -4,15 +4,13 @@ import FloatingElement from '../../../components/layout/FloatingElement';
 import { Button, Input, Spin, Tabs, Typography } from 'antd';
 import { MintInfo } from '../../../utils/tokens';
 import { useAsyncData } from '../../../utils/fetch-loop';
-import { useConnection } from '../../../utils/connection';
 import { PublicKey } from '@solana/web3.js';
 import tuple from 'immutable-tuple';
 import PoolBasketDisplay from './PoolBasketDisplay';
 import BN from 'bn.js';
 import { notify } from '../../../utils/notifications';
-import { useWallet } from '../../../utils/wallet';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useTokenAccounts } from '../../../utils/markets';
-import { sendTransaction } from '../../../utils/send';
 
 const { Text } = Typography;
 const { TabPane } = Tabs;
@@ -55,8 +53,8 @@ interface CreateRedeemInnerPanel {
 }
 
 function CreateRedeemTab({ poolInfo, mintInfo, tab }: CreateRedeemInnerPanel) {
-  const connection = useConnection();
-  const { wallet, connected } = useWallet();
+  const {connection} = useConnection();
+  const { wallet, connected, publicKey, sendTransaction } = useWallet();
   const [quantity, setQuantity] = useState('');
   const [tokenAccounts] = useTokenAccounts();
   const [submitting, setSubmitting] = useState(false);
@@ -95,7 +93,7 @@ function CreateRedeemTab({ poolInfo, mintInfo, tab }: CreateRedeemInnerPanel) {
 
   async function onSubmit(e) {
     e.preventDefault();
-    if (!action || !basket || !connected || !canSubmit || !wallet) {
+    if (!action || !basket || !connected || !canSubmit || !wallet || !publicKey) {
       return;
     }
     setSubmitting(true);
@@ -104,7 +102,7 @@ function CreateRedeemTab({ poolInfo, mintInfo, tab }: CreateRedeemInnerPanel) {
         poolInfo,
         action,
         {
-          owner: wallet.publicKey,
+          owner: publicKey,
           poolTokenAccount: findTokenAccount(poolInfo.state.poolTokenMint),
           assetAccounts: poolInfo.state.assets.map((asset) =>
             findTokenAccount(asset.mint),
@@ -112,7 +110,7 @@ function CreateRedeemTab({ poolInfo, mintInfo, tab }: CreateRedeemInnerPanel) {
         },
         basket,
       );
-      await sendTransaction({ connection, wallet, transaction, signers });
+      await sendTransaction(transaction, connection);
     } catch (e) {
       console.warn(e);
       notify({

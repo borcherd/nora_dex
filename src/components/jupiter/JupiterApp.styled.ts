@@ -9,7 +9,7 @@ export const wrapper = styled.div({
   flexDirection: 'column',
   width: 'max-content',
 
-  Button: { justifyContent: 'center', display: 'flex', alignItems: 'center' },
+  '.form-button': { justifyContent: 'center', display: 'flex', alignItems: 'center', width:'100%' },
 });
 
 export const SelectWrapper = styled.div({
@@ -21,6 +21,11 @@ export const SelectWrapper = styled.div({
     width: 360,
     border: 1,
     borderRadius: '12px',
+  },
+  '.ant-select-open': {
+    img: {
+      opacity: '25%',
+    },
   },
 });
 
@@ -67,7 +72,7 @@ export const RoutesWrapper = styled.div({
   gap: '20px',
 
   '& .selected': {
-    border: '3px solid white !important',
+    border: '2px solid #6147FF !important',
   },
 
   '.route-wrapper': {
