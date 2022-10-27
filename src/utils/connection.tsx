@@ -6,121 +6,12 @@ import { setCache, useAsyncData } from './fetch-loop';
 import { ConnectionContextValues, EndpointInfo } from './types';
 import { useLocalStorageState } from './utils';
 
-
-export const endpoints = [
-  // { url: 'https://raydium.rpcpool.com', weight: 30 },
-  { url: 'https://solana-api.tt-prod.net', weight: 100 }
-  // { url: 'https://raydium.genesysgo.net', weight: 100 }
-]
-
-export function getRandomEndpoint() {
-  let pointer = 0
-  const random = Math.random() * 100
-  let api = endpoints[0].url
-
-  for (const endpoint of endpoints) {
-    if (random > pointer + endpoint.weight) {
-      pointer += pointer + endpoint.weight
-    } else if (random >= pointer && random < pointer + endpoint.weight) {
-      api = endpoint.url
-      break
-    } else {
-      api = endpoint.url
-      break
-    }
-  }
-
-  return api
-}
-
-export const ENDPOINTS: EndpointInfo[] = [
-  {
-    name: 'mainnet-beta',
-    // endpoint: 'https://solana-api.projectserum.com',
-    endpoint: getRandomEndpoint(),
-    custom: false,
-  },
-  { name: 'localnet', endpoint: 'http://127.0.0.1:8899', custom: false },
-];
-
 const accountListenerCount = new Map();
-
-const ConnectionContext: React.Context<null | ConnectionContextValues> = React.createContext<null | ConnectionContextValues>(
-  null,
-);
-
-export function ConnectionProvider({ children }) {
-  const [endpoint, setEndpoint] = useLocalStorageState<string>(
-    'connectionEndpts',
-    ENDPOINTS[0].endpoint,
-  );
-  const [customEndpoints, setCustomEndpoints] = useLocalStorageState<
-    EndpointInfo[]
-  >('customConnectionEndpoints', []);
-  const availableEndpoints = ENDPOINTS.concat(customEndpoints);
-
-  const connection = useMemo(() => new Connection(endpoint, 'recent'), [
-    endpoint,
-  ]);
-  const sendConnection = useMemo(() => new Connection(endpoint, 'recent'), [
-    endpoint,
-  ]);
-
-  // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
-  // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.
-  // This is a hack to prevent the list from every getting empty
-  useEffect(() => {
-    const id = connection.onAccountChange(new Account().publicKey, () => {});
-    return () => {
-      connection.removeAccountChangeListener(id);
-    };
-  }, [connection]);
-
-  useEffect(() => {
-    const id = connection.onSlotChange(() => null);
-    return () => {
-      connection.removeSlotChangeListener(id);
-    };
-  }, [connection]);
-
-  useEffect(() => {
-    const id = sendConnection.onAccountChange(
-      new Account().publicKey,
-      () => {},
-    );
-    return () => {
-      sendConnection.removeAccountChangeListener(id);
-    };
-  }, [sendConnection]);
-
-  useEffect(() => {
-    const id = sendConnection.onSlotChange(() => null);
-    return () => {
-      sendConnection.removeSlotChangeListener(id);
-    };
-  }, [sendConnection]);
-
-  return (
-    <ConnectionContext.Provider
-      value={{
-        endpoint,
-        setEndpoint,
-        connection,
-        sendConnection,
-        availableEndpoints,
-        setCustomEndpoints,
-      }}
-    >
-      {children}
-    </ConnectionContext.Provider>
-  );
-}
-
 
 export function useAccountInfo(
   publicKey: PublicKey | undefined | null,
 ): [AccountInfo<Buffer> | null | undefined, boolean] {
-  const {connection} = useConnection();
+  const { connection } = useConnection();
   const cacheKey = tuple(connection, publicKey?.toBase58());
   const [accountInfo, loaded] = useAsyncData<AccountInfo<Buffer> | null>(
     async () => (publicKey ? connection.getAccountInfo(publicKey) : null),

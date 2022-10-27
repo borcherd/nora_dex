@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { RouteInfo, TOKEN_LIST_URL } from '@jup-ag/core';
 import { PublicKey } from '@solana/web3.js';
-import { useJupiter } from '@jup-ag/react-hook';
+import { useJupiter, getPlatformFeeAccounts, PlatformFee } from '@jup-ag/react-hook';
 import JSBI from 'jsbi';
 import { Button, Form, Input, InputNumber, Select } from 'antd';
 
@@ -19,7 +19,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { notify } from 'utils/notifications';
 
-const { Option, OptGroup } = Select;
+const { Option } = Select;
 
 export const JupiterApp = () => {
   const {
@@ -30,7 +30,6 @@ export const JupiterApp = () => {
     signAllTransactions,
     signTransaction,
   } = useWallet();
-
   const { connection } = useConnection();
 
   const [tokens, setTokens] = useState<IToken[]>([]);
@@ -59,7 +58,15 @@ export const JupiterApp = () => {
 
   const [useableRoutes, setUseableRoutes] = useState<RouteInfo[]>([]);
 
-  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+  const getPlatformFeeAccountsLocal = async () => {
+    const platformFeeAndAccounts = {
+      feebps: 50,
+      feeAccounts: await getPlatformFeeAccounts(
+        connection,
+        new PublicKey('9vDonE72chUhdTNEu7Lfo6sgSsNiCBr9sRtGX6K5bj5Z'),
+      ).finally(() => {return platformFeeAndAccounts}),
+    };
+  };
 
   const jupiter = useJupiter({
     amount: JSBI.BigInt(formWatch.amount * 10 ** formWatch.decimals),
@@ -83,7 +90,13 @@ export const JupiterApp = () => {
     // Fetch token list from Jupiter API
     fetch(TOKEN_LIST_URL['mainnet-beta'])
       .then((response) => response.json())
-      .then((result) => setTokens(result));
+      .then((result) => {
+        setTokens(result);
+        if (connected && wallet) {
+          GetTokenAccounts(result);
+        }
+      });
+    getPlatformFeeAccountsLocal();
   }, []);
 
   useEffect(() => {
@@ -103,7 +116,6 @@ export const JupiterApp = () => {
   }, [routes]);
 
   useEffect(() => {
-    console.log('useable routes ' + useableRoutes);
     setSelectedRoute(undefined);
   }, [useableRoutes]);
 
@@ -150,25 +162,39 @@ export const JupiterApp = () => {
     );
   };
 
-  async function GetTokenAccounts() {
+  async function GetTokenAccounts(_tokens: IToken[] | undefined = undefined) {
     if (wallet && connection && publicKey) {
       const _tokenAccounts = await getWalletTokenAccounts({
         connection: connection,
         walletKey: publicKey,
       });
+      const _convertedTokenAccountSol: IConvertedAccount = {
+        amount: (await connection.getBalance(publicKey)) / 10 ** 9,
+        mint: new PublicKey('So11111111111111111111111111111111111111112'),
+      };
       setTokenAccounts(_tokenAccounts);
-      const _mergedTokenList = mergeTokens(
-        cleanTokens(tokens),
-        cleanTokenAccounts(_tokenAccounts),
-      );
-      console.log(_mergedTokenList);
-      setMergedTokenList(_mergedTokenList);
+      const _cleanedTokenAccounts = cleanTokenAccounts(_tokenAccounts);
+      _cleanedTokenAccounts.push(_convertedTokenAccountSol);
+      if (tokens.length > 0) {
+        const _mergedTokenList = mergeTokens(
+          cleanTokens(tokens),
+          _cleanedTokenAccounts,
+        );
+        setMergedTokenList(_mergedTokenList);
+      } else if (_tokens) {
+        const _mergedTokenList = mergeTokens(
+          cleanTokens(_tokens),
+          _cleanedTokenAccounts,
+        );
+
+        setMergedTokenList(_mergedTokenList);
+      }
     }
   }
 
   useEffect(() => {
     if (connected && wallet) {
-      GetTokenAccounts();
+      GetTokenAccounts(tokens);
     }
   }, [connected]);
 
@@ -179,17 +205,13 @@ export const JupiterApp = () => {
     form.setValue('outputToken', new PublicKey(values.outputToken));
     form.setValue('amount', values.amount as number);
 
-
     let dec = mergedTokenList.find(
-      (value) =>
-        value.mint.toString() === values.inputToken.toString(),
+      (value) => value.mint.toString() === values.inputToken.toString(),
     )?.decimals;
     if (dec === undefined) {
-      throw new Error("decimals of input not found");
-      
+      throw new Error('decimals of input not found');
     } else {
-      form.setValue('decimals', dec)
-
+      form.setValue('decimals', dec);
     }
     refresh();
   };
@@ -204,10 +226,6 @@ export const JupiterApp = () => {
     ) {
       const _selectedRoute = useableRoutes[idx];
 
-      console.log(_selectedRoute.inAmount);
-      console.log(_selectedRoute.outAmount);
-
-
 
       const swapResult: any = await exchange({
         routeInfo: _selectedRoute,
@@ -217,6 +235,7 @@ export const JupiterApp = () => {
           signTransaction: signTransaction,
         },
         userPublicKey: publicKey,
+        feeAccount:new PublicKey('')  
       });
 
       if (swapResult.error) {
@@ -228,10 +247,19 @@ export const JupiterApp = () => {
           type: 'success',
         });
         console.log(`https://explorer.solana.com/tx/${swapResult.txid}`);
-        antdForm.resetFields()
-        form.reset()
+        reset();
       }
     }
+  };
+
+  const reset = () => {
+    antdForm.resetFields();
+    form.reset();
+    setUseableRoutes([]);
+    setSearching(false);
+    setMaxAmount(0);
+    setSelectedRoute(undefined);
+    GetTokenAccounts();
   };
 
   const getDecimals = (route: RouteInfo) => {
@@ -415,7 +443,6 @@ export const JupiterApp = () => {
                   </>
                 );
               })}
-              {console.log(routes)}
               {selectedRoute != undefined && routes && (
                 <Button onClick={() => swap(selectedRoute)}>Swap</Button>
               )}
@@ -429,7 +456,7 @@ export const JupiterApp = () => {
                 'no routes found'
               ) : (
                 ''
-              )}{' '}
+              )}
             </>
           )}
         </styled.wrapper>

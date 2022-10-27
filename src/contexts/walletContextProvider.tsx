@@ -19,7 +19,7 @@ import { WalletAccountsContextProvider } from './accountContextProvider';
 
 export const endpoints = [
   // { url: 'https://raydium.rpcpool.com', weight: 30 },
-  { url: 'https://solana-api.tt-prod.net', weight: 100 },
+  { url: 'https://app.solanadino.workers.dev/', weight: 100 },
   // { url: 'https://raydium.genesysgo.net', weight: 100 }
 ];
 
@@ -52,7 +52,7 @@ const WalletContextProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const network = WalletAdapterNetwork.Mainnet;
 
   // You can also provide a custom RPC endpoint.
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
   const wallets = useMemo(
     () => [

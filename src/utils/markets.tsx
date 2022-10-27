@@ -408,6 +408,8 @@ export function MarketProvider({ marketAddress, setMarketAddress, children }) {
     }
     if (!localMarket || !localToken) return;
     setMarket(null);
+    console.log(marketInfo)
+
     if (!marketInfo || !marketInfo.address) {
       notify({
         message: 'Error loading market',
@@ -418,13 +420,12 @@ export function MarketProvider({ marketAddress, setMarketAddress, children }) {
     } else {
       setMarketName(marketInfo.name);
     }
-    console.log(connection)
     Market.load(connection, marketInfo.address, {}, marketInfo.programId)
       .then(setMarket)
       .catch((e) =>
         notify({
           message: 'Error loading market',
-          description: 'error hierzo',
+          description: e.message,
           type: 'error',
         }),
       );
