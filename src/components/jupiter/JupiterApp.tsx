@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { RouteInfo, TOKEN_LIST_URL } from '@jup-ag/core';
 import { PublicKey } from '@solana/web3.js';
-import { useJupiter, getPlatformFeeAccounts, PlatformFee } from '@jup-ag/react-hook';
+import { useJupiter,} from '@jup-ag/react-hook';
 import JSBI from 'jsbi';
-import { Button, Form, Input, InputNumber, Select } from 'antd';
+import { Button, Form, Input, Select } from 'antd';
 
 import * as styled from './JupiterApp.styled';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
@@ -19,6 +19,9 @@ import {
 import { useForm } from 'react-hook-form';
 import { notify } from 'utils/notifications';
 
+import feeAccounts from '../../consts/feeAccounts.json';
+
+
 const { Option } = Select;
 
 export const JupiterApp = () => {
@@ -33,7 +36,6 @@ export const JupiterApp = () => {
   const { connection } = useConnection();
 
   const [tokens, setTokens] = useState<IToken[]>([]);
-  const [tokenAccounts, setTokenAccounts] = useState<ISplAccounts[]>([]);
   const [mergedTokenList, setMergedTokenList] = useState<IMergedTokens[]>([]);
 
   const [attemptingSwap, setAttemptingSwap] = useState<boolean>(false);
@@ -58,33 +60,13 @@ export const JupiterApp = () => {
 
   const [useableRoutes, setUseableRoutes] = useState<RouteInfo[]>([]);
 
-  const getPlatformFeeAccountsLocal = async () => {
-    const platformFeeAndAccounts = {
-      feebps: 50,
-      feeAccounts: await getPlatformFeeAccounts(
-        connection,
-        new PublicKey('9vDonE72chUhdTNEu7Lfo6sgSsNiCBr9sRtGX6K5bj5Z'),
-      ).finally(() => {return platformFeeAndAccounts}),
-    };
-  };
-
-  const jupiter = useJupiter({
+  const {exchange, refresh, routes} = useJupiter({
     amount: JSBI.BigInt(formWatch.amount * 10 ** formWatch.decimals),
     inputMint: new PublicKey(formWatch.inputToken),
     outputMint: new PublicKey(formWatch.outputToken),
     slippage: 1, // 1% slippage
+    
   });
-
-  const {
-    allTokenMints, // all the token mints that is possible to be input
-    routeMap, // routeMap, same as the one in @jup-ag/core
-    exchange, // exchange
-    refresh, // function to refresh rates
-    lastRefreshTimestamp, // timestamp when the data was last returned
-    loading, // loading states
-    routes, // all the routes from inputMint to outputMint
-    error,
-  } = jupiter;
 
   useEffect(() => {
     // Fetch token list from Jupiter API
@@ -93,13 +75,13 @@ export const JupiterApp = () => {
       .then((result) => {
         setTokens(result);
         if (connected && wallet) {
-          GetTokenAccounts(result);
+          GetTokenAccountsAndMerge(result);
         }
       });
-    getPlatformFeeAccountsLocal();
   }, []);
 
   useEffect(() => {
+    //Look through all routes to select the routes with the correct input- and outputmint
     if (routes) {
       setAttemptingSwap(false);
       setUseableRoutes(
@@ -120,6 +102,7 @@ export const JupiterApp = () => {
   }, [useableRoutes]);
 
   const cleanTokens = (tokens: IToken[]) => {
+    //Clean tokens fetched from jupiter, only keep neccesary fields
     const _tokens: IConvertedToken[] = [];
     tokens.map((token) => {
       _tokens.push({
@@ -132,6 +115,7 @@ export const JupiterApp = () => {
     return _tokens;
   };
   const cleanTokenAccounts = (tokenAccounts: ISplAccounts[]) => {
+    //Clean tokenAccounts fetched from wallet, only keep neccesary fields
     const _tokenAccounts: IConvertedAccount[] = [];
     tokenAccounts.map((tokenAccount) => {
       _tokenAccounts.push({
@@ -142,6 +126,7 @@ export const JupiterApp = () => {
     return _tokenAccounts;
   };
   const mergeTokens = (tokensCleaned, tokenAccountsCleaned) => {
+    //Merge cleaned tokens and cleaned tokenaccounts into one array
     const tok: IMergedTokens[] = tokensCleaned.map((token) => ({
       ...tokenAccountsCleaned.find(
         (tokenAccountsCleaned) =>
@@ -162,7 +147,8 @@ export const JupiterApp = () => {
     );
   };
 
-  async function GetTokenAccounts(_tokens: IToken[] | undefined = undefined) {
+  async function GetTokenAccountsAndMerge(_tokens: IToken[] | undefined = undefined) {
+    //Fetch tokenAccounts, add sol balance, clean and merge
     if (wallet && connection && publicKey) {
       const _tokenAccounts = await getWalletTokenAccounts({
         connection: connection,
@@ -172,7 +158,6 @@ export const JupiterApp = () => {
         amount: (await connection.getBalance(publicKey)) / 10 ** 9,
         mint: new PublicKey('So11111111111111111111111111111111111111112'),
       };
-      setTokenAccounts(_tokenAccounts);
       const _cleanedTokenAccounts = cleanTokenAccounts(_tokenAccounts);
       _cleanedTokenAccounts.push(_convertedTokenAccountSol);
       if (tokens.length > 0) {
@@ -191,16 +176,17 @@ export const JupiterApp = () => {
       }
     }
   }
-
   useEffect(() => {
     if (connected && wallet) {
-      GetTokenAccounts(tokens);
+      GetTokenAccountsAndMerge(tokens);
     }
   }, [connected]);
 
   const calculateBestRoute = async (values: any) => {
+    //Update form used in useJupiter to receive new routes routes.
     setSearching(true);
     setAttemptingSwap(true);
+    setUseableRoutes([]);
     form.setValue('inputToken', new PublicKey(values.inputToken));
     form.setValue('outputToken', new PublicKey(values.outputToken));
     form.setValue('amount', values.amount as number);
@@ -217,6 +203,7 @@ export const JupiterApp = () => {
   };
 
   const swap = async (idx: number) => {
+    //Attempt swap, if there is a fee account with the corresponding outputMint, a 0.5% fee is deducted
     if (
       useableRoutes &&
       wallet &&
@@ -225,22 +212,37 @@ export const JupiterApp = () => {
       signTransaction
     ) {
       const _selectedRoute = useableRoutes[idx];
+      let _feeAccount = feeAccounts[ _selectedRoute.marketInfos[0].outputMint.toString()]
+      let swapResult:any
 
-
-      const swapResult: any = await exchange({
-        routeInfo: _selectedRoute,
-        wallet: {
-          sendTransaction: sendTransaction,
-          signAllTransactions: signAllTransactions,
-          signTransaction: signTransaction,
-        },
-        userPublicKey: publicKey,
-        feeAccount:new PublicKey('')  
-      });
+      if (_feeAccount){
+        swapResult = await exchange({
+          routeInfo: _selectedRoute,
+          wallet: {
+            sendTransaction: sendTransaction,
+            signAllTransactions: signAllTransactions,
+            signTransaction: signTransaction,
+          },
+          userPublicKey: publicKey,
+          feeAccount: new PublicKey( _feeAccount)
+        });
+      } else {
+        swapResult = await exchange({
+          routeInfo: _selectedRoute,
+          wallet: {
+            sendTransaction: sendTransaction,
+            signAllTransactions: signAllTransactions,
+            signTransaction: signTransaction,
+          },
+          userPublicKey: publicKey,
+  
+        });
+      }     
 
       if (swapResult.error) {
         console.log(swapResult.error);
         notify({ message: 'Swap failed', type: 'error' });
+        console.log(swapResult.txid)
       } else {
         notify({
           message: `Swap succes. TXiD: ${swapResult.txid}`,
@@ -253,16 +255,18 @@ export const JupiterApp = () => {
   };
 
   const reset = () => {
+    //Reset all fields when the swap is completed
     antdForm.resetFields();
     form.reset();
     setUseableRoutes([]);
     setSearching(false);
     setMaxAmount(0);
     setSelectedRoute(undefined);
-    GetTokenAccounts();
+    GetTokenAccountsAndMerge();
   };
 
-  const getDecimals = (route: RouteInfo) => {
+  const getOutputDecimals = (route: RouteInfo) => {
+    //Get the decimals of the outputMint to display the output value
     const dec = mergedTokenList.find(
       (value) =>
         value.mint.toString() === route.marketInfos[0].outputMint.toString(),
@@ -270,7 +274,7 @@ export const JupiterApp = () => {
 
     if (dec === undefined) {
       console.log(
-        'decimals of outputToken not found, so outputValue might be wrong',
+        'decimals of outputToken not found, so outputValue might be shown wrong',
       );
       return 8;
     } else {
@@ -402,8 +406,7 @@ export const JupiterApp = () => {
             <styled.RoutesWrapper>
               {useableRoutes.slice(0, 2).map((route, idx) => {
                 return (
-                  <>
-                    <div
+                    <div key={idx}
                       className={
                         selectedRoute === idx
                           ? 'route-wrapper selected'
@@ -418,10 +421,9 @@ export const JupiterApp = () => {
                         <h3>
                           {Math.round(
                             (route.marketInfos[0].outAmount[0] /
-                              10 ** getDecimals(route)) *
+                              10 ** getOutputDecimals(route)) *
                               100000,
                           ) / 100000}
-                          {/* Change to outputdecimals */}
                         </h3>
                       </div>
                       <div className="section">
@@ -440,7 +442,6 @@ export const JupiterApp = () => {
                         </h4>
                       </div>
                     </div>
-                  </>
                 );
               })}
               {selectedRoute != undefined && routes && (
@@ -449,7 +450,6 @@ export const JupiterApp = () => {
             </styled.RoutesWrapper>
           ) : (
             <>
-              {' '}
               {attemptingSwap ? (
                 <styled.LoadingSwap />
               ) : searching ? (

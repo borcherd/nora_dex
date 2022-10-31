@@ -418,8 +418,6 @@ export async function placeOrder({
     notify({ message: 'Invalid  market', type: 'error' });
     return;
   }
-  console.log(size)
-  console.log(market.minOrderSize)
   if (!isIncrement(size, market.minOrderSize)) {
     notify({
       message: `Size must be an increment of ${formattedMinOrderSize}`,
@@ -484,7 +482,6 @@ export async function placeOrder({
     orderType,
     feeDiscountPubkey: feeDiscountPubkey || null,
   };
-  console.log(params);
 
   const matchOrderstransaction = market.makeMatchOrdersTransaction(5);
   transaction.add(matchOrderstransaction);

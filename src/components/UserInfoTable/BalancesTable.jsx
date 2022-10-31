@@ -19,8 +19,6 @@ export default function BalancesTable({
   const { wallet, publicKey, signTransaction } = useWallet();
 
   async function onSettleFunds(market, openOrders) {
-    console.log(market);
-    console.log(openOrders);
     try {
       await settleFunds({
         market,
